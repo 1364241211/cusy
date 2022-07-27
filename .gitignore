@@ -3,3 +3,6 @@
 /customersys/*.log
 /customersys/*.pid
 /vite-test/node_modules/
+.vim
+.idea
+/vite-test/dist/
