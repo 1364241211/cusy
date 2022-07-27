@@ -2,3 +2,4 @@
 /customersys/*.ini
 /customersys/*.log
 /customersys/*.pid
+/vite-test/node_modules/
