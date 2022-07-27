@@ -1,15 +1,36 @@
 <template>
   <div>
+    <el-header>
+      <el-button-group>
+        <el-button
+          type="warning"
+          :disabled="buttonEnable"
+          :icon="CircleClose"
+          @click="moderateUsers(2)"
+          >驳回 ({{ buttonEnable ? 0 : selectionRows }})</el-button
+        >
+      </el-button-group>
+      <el-input
+        v-model="search"
+        placeholder="请输入查询关键字"
+        @input="searchCustomer"
+        clearable
+        :prefix-icon="Search"
+        @clear="clearSearch"
+      />
+    </el-header>
+
     <el-table
       :data="tableData"
       ref="tableInstance"
       max-height="800"
       v-loading="tableLoading"
       element-loading-text="加载中"
+      @selection-change="columnSelect"
       border
       stripe
     >
-      <!-- <el-table-column type="selection"></el-table-column> -->
+      <el-table-column type="selection"></el-table-column>
       <el-table-column
         label="Id"
         width="70"
@@ -22,6 +43,7 @@
       <el-table-column
         prop="customer_name"
         label="学生姓名"
+        width="100"
         align="center"
       ></el-table-column>
       <el-table-column prop="customer_photo" label="学生照片" align="center">
@@ -57,34 +79,41 @@
         prop="class_name"
         label="学生批次"
         align="center"
+        :filters="classFilters"
+        :filter-method="calssFiltersMethod"
       ></el-table-column>
       <el-table-column
         prop="customer_logtime"
         label="学生登记时间"
         align="center"
       ></el-table-column>
-      <el-table-column align="center">
-        <template #header>
-          <div class="search-header">
-            <el-input
-              v-model="search"
-              size="small"
-              placeholder="请输入身份证号码"
-              @input="searchCustomer"
-              clearable
-              @clear="clearSearch"
-            />
-          </div>
-        </template>
+      <el-table-column align="center" label="操作">
         <template #default="tail">
-          <div class="button-groups">
-            <el-button type="primary" @click="updateCustomer(tail.$index)"
+          <el-button-group>
+            <!----<div class="button-groups">--->
+            <el-button
+              type="primary"
+              size="small"
+              :icon="Edit"
+              @click="updateCustomer(tail.$index)"
               >修改</el-button
             >
-            <el-button type="danger" @click="deleteCustomer(tail.$index)"
+            <el-button
+              type="danger"
+              size="small"
+              :icon="Delete"
+              @click="deleteCustomer(tail.$index)"
               >删除</el-button
             >
-          </div>
+            <!----<el-button
+              type="warning"
+              @click="rejectCustomer(tail.$index)"
+              size="small"
+            >
+              驳回
+            </el-button>--->
+            <!---</div>--->
+          </el-button-group>
         </template>
       </el-table-column>
     </el-table>
@@ -115,24 +144,25 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  ref,
-  reactive,
-  watch,
-  defineAsyncComponent,
-  provide,
-  inject,
-} from "vue";
+import { ref, reactive, watch, defineAsyncComponent, inject } from "vue";
 import { ElMessage, ElMessageBox, ElTable } from "element-plus";
+import type { TableColumnCtx } from "element-plus/es/components/table/src/table-column/defaults";
 import { AxiosResponse } from "axios";
-import { customer, pagnationData } from "../types/index";
+
+import { Delete, Edit, Search, CircleClose } from "@element-plus/icons";
+
+import { classType, customer, pagnationData } from "../types/index";
 import service from "../util/api";
 
+const buttonEnable = ref(true);
+const selectionRows = ref(0);
 const isAlive = ref(false);
 const destroyCom = () => {
   isAlive.value = false;
 };
 const reload = inject("reload", Function, true);
+const classFilters = ref<Array<{ text: string; value: string }>>([]);
+
 const pagnation = reactive<pagnationData>({
   count: 0,
   next: "null",
@@ -144,6 +174,23 @@ const changeLoading = (): void => {
 };
 const tableData = ref<Array<customer>>();
 const tableInstance = ref<InstanceType<typeof ElTable>>();
+
+// 班级过滤方法
+const calssFiltersMethod = (
+  value: string,
+  row: customer,
+  column: TableColumnCtx<customer>
+) => {
+  const property = column["property"] as string;
+  console.log(value);
+  console.log(row);
+  console.log(column);
+  return row[property] === value;
+};
+// 重制班级过滤
+const restClassFilter = () => {
+  tableInstance.value?.clearFilter(["class_name"]);
+};
 // 设置通过传递的response设置表格数据tableData
 const set_tableData = (res: AxiosResponse) => {
   pagnation.count = res.data.count;
@@ -153,6 +200,41 @@ const set_tableData = (res: AxiosResponse) => {
   tableData.value!.forEach((ele) => {
     pre_src_list.value.push(`/static/avatar/${ele.customer_photo}`);
   });
+};
+// 获取选择的表格数据
+const columnSelect = () => {
+  if (tableInstance.value?.getSelectionRows().length !== 0) {
+    buttonEnable.value = false;
+    selectionRows.value = tableInstance.value?.getSelectionRows().length;
+  } else {
+    buttonEnable.value = true;
+  }
+};
+// 为按钮组添加点击事件
+// status :1 通过
+// status :2 驳回
+const moderateUsers = (status: number) => {
+  changeLoading();
+  service
+    .post(
+      `/validateCustomers?status=${status}`,
+      JSON.stringify({
+        idList: tableInstance.value
+          ?.getSelectionRows()
+          .map((item: customer) => {
+            return item.id;
+          }),
+      })
+    )
+    .then((res) => {
+      ElMessage.success({ message: res.data.message });
+      reload();
+      changeLoading();
+    })
+    .catch((err) => {
+      ElMessage.error({ message: err });
+      changeLoading();
+    });
 };
 const search = ref<string>();
 const pre_src_list = ref<Array<string>>([]);
@@ -164,7 +246,6 @@ const changeInitIndex = (iniInex: number) => {
 };
 
 const pageSize = ref<number>(30);
-431381198703102276;
 const pageSizeList = ref<Array<number>>([30, 50, 100]);
 const currentPage = ref<number>();
 // 监听当前页面页码，发生改变时滚动到表格最上方
@@ -214,7 +295,7 @@ const jumpPage = () => {
       ElMessage.error(err.code);
     });
 };
-// 通过身份证查询单个用户
+// 通过模糊查询用户
 const searchCustomer = () => {
   if (search.value !== "") {
     changeLoading();
@@ -304,14 +385,33 @@ service
   .catch((err) => {
     ElMessage.error(err.code);
   });
+service.get("/classGeneralApi").then((res) => {
+  classFilters.value = res.data.map((ele: classType) => {
+    return {
+      text: ele.class_name,
+      value: ele.class_name,
+    };
+  });
+});
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .search-header {
   display: flex;
   width: 100%;
 }
 
+.el-header {
+  display: flex;
+  margin-bottom: 0.5rem;
+  height: min-content;
+  padding: 0;
+  text-align: left;
+  justify-content: space-between;
+  .el-input {
+    width: 220px;
+  }
+}
 .el-message-box__message {
   white-space: pre-wrap;
 }

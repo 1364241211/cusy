@@ -130,7 +130,7 @@ const forms = reactive({
 const updateCustomerPhoto = ref<UploadUserFile[]>([
   {
     name: props.itemProps.customer_photo,
-    url: `http://192.168.2.103/static/avatar/${props.itemProps.customer_photo}`,
+    url: `/static/avatar/${props.itemProps.customer_photo}`,
   },
 ]);
 

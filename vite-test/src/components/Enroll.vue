@@ -1,7 +1,13 @@
 <template>
   <el-main>
     <header>东辰饭卡登记表</header>
-    <van-form colon label-width="8em" ref="formInstance">
+    <van-form
+      colon
+      label-width="8em"
+      ref="formInstance"
+      :scroll-to-error="true"
+      :show-error="true"
+    >
       <van-cell-group inset>
         <van-field
           v-model="form.customer_name"
@@ -22,6 +28,7 @@
         >
         </van-field>
         <van-field
+          type="tel"
           v-model="form.par_phone"
           name="parent_phone"
           label="家长手机号码"
@@ -36,6 +43,7 @@
           label="学生批次"
           placeholder="请选择学生班级"
           required
+          :rules="formRules.class_name"
           is-link
           readonly
           @click="showPicker = true"
@@ -53,23 +61,33 @@
             @confirm="onConfirm"
           />
         </van-popup>
-        <van-cell>
-          <label class="stuPhoto">学生照片</label>
-          <van-uploader
-            v-model="form.customer_photo"
-            upload-icon="plus"
-            accept="image/jpg,image/png,image/jpeg"
-            :max-count="1"
-            result-type="dataUrl"
-          >
-          </van-uploader>
-        </van-cell>
+        <van-field
+          name="customer_photo"
+          required
+          label="学生照片"
+          :rules="formRules.customer_photo"
+        >
+          <template #input>
+            <van-uploader
+              v-model="form.customer_photo"
+              upload-icon="plus"
+              accept="image/jpg,image/png,image/jpeg"
+              :max-count="1"
+              result-type="dataUrl"
+            >
+            </van-uploader>
+          </template>
+        </van-field>
+
         <van-cell :center="true">
           <van-button
             type="primary"
             round
             size="normal"
             icon="success"
+            :disabled="wait"
+            :loading="wait"
+            loading-text="提交中，请稍等..."
             @click="submitForm"
             >提交</van-button
           >
@@ -108,8 +126,9 @@ import router from "../router";
 import checkID from "../util/RegexVaild";
 import service from "../util/api";
 import type { classType } from "../types";
-import { compressAccurately } from "image-conversion";
+import { compressAccurately, filetoDataURL } from "image-conversion";
 
+const wait = ref<boolean>(false);
 const classes = ref<Array<classType>>([]);
 const showPicker = ref(false);
 const formInstance = ref<FormInstance>();
@@ -121,6 +140,7 @@ const form = reactive({
   class_id: 0,
   customer_photo: new Array<UploaderFileListItem>(),
 });
+
 const onConfirm = (value: any) => {
   showPicker.value = false;
   form.class_name = value;
@@ -131,6 +151,7 @@ const onConfirm = (value: any) => {
   });
   console.log(form.class_id);
 };
+
 const vaildName = (value: any) => {
   if (value === "") {
     return "请输入姓名！";
@@ -140,6 +161,7 @@ const vaildName = (value: any) => {
     return "";
   }
 };
+
 const vaildId = (value: any) => {
   if (value === "") {
     return "请输入身份号码！";
@@ -149,6 +171,7 @@ const vaildId = (value: any) => {
     return "";
   }
 };
+
 const vaildphone = (value: any) => {
   if (value === "") {
     return "请输入手机号码！";
@@ -162,15 +185,16 @@ const vaildphone = (value: any) => {
     return "";
   }
 };
+
 const formRules = reactive({
   customer_name: [
-    { validator: vaildName, trigger: "onBlur", required: true },
+    { validator: vaildName, trigger: "onChange", required: true },
   ] as FieldRule[],
   customer_id: [
-    { validator: vaildId, trigger: "onBlur", required: true },
+    { validator: vaildId, trigger: "onChange", required: true },
   ] as FieldRule[],
   par_phone: [
-    { validator: vaildphone, trigger: "onBlur", required: true },
+    { validator: vaildphone, trigger: "onChange", required: true },
   ] as FieldRule[],
   class_name: [{ required: true }],
   customer_photo: [{ required: true }],
@@ -179,8 +203,8 @@ const formRules = reactive({
 const idIsExist = ref(false);
 
 // 提交post请求到服务器
-const subPost = () => {
-  service
+const subPost = async () => {
+  await service
     .post(
       "/customerGeneralApi",
       JSON.stringify({
@@ -189,21 +213,36 @@ const subPost = () => {
         parent_phone: form.par_phone,
         class_id: form.class_id,
         class_name: form.class_name,
-        customer_photo: `${
-          form.customer_id
-        }.${form.customer_photo[0].file?.type.replace("image/", "")}`,
+        customer_photo: `${form.customer_id}.${form.customer_photo
+          .at(0)
+          ?.file?.type.replace("image/", "")}`,
       })
     )
     .then((res) => {
       switch (res.data.code) {
         case 200:
-          // 上传用户信息成功时，上传用户头像
-          uploadImage(form.customer_photo.at(0) as UploaderFileListItem);
-          router.push({ name: "success" });
+          {
+            // 上传用户信息成功时，上传用户头像
+            uploadImage(form.customer_photo.at(0) as UploaderFileListItem);
+            Notify({ type: "success", message: "提交成功,两秒后跳转。" });
+            setTimeout(() => {
+              router.push({ name: "success" });
+            }, 2000);
+            wait.value = false;
+          }
+          break;
+        case 400:
+          {
+            Notify({
+              type: "danger",
+              message: "提交失败，可能网路有波动,请稍后提交!",
+            });
+          }
+          break;
       }
     })
     .catch((err) => {
-      Notify({ type: "danger", message: "提交失败,请检查网路！" });
+      Notify({ type: "danger", message: err.message });
     });
 };
 // 当用户点击是按钮时触发事件
@@ -213,34 +252,41 @@ const enterUpdateCus = () => {
 };
 // 当用户点击提交时，提交表单继续规则检验
 const submitForm = () => {
-  // const formRecord: Record<string, FieldValidationStatus> | undefined = formInstance.value?.getValidationStatus()
+  wait.value = true;
   formInstance.value
     ?.validate()
-    .then((rep) => {
+    .then(() => {
       service
         .get(`/customerGeneralApi?customer_id=${form.customer_id}`)
         .then((res) => {
-          if (res.data.code == 404) {
-            subPost();
-          } else if (res.data.code == 200) {
-            idIsExist.value = true;
+          switch (res.data.code) {
+            case 404:
+              {
+                subPost();
+              }
+              break;
+            case 200:
+              {
+                idIsExist.value = true;
+              }
+              break;
           }
         });
     })
-    .catch((err) => {});
+    .catch(() => {
+      Notify({ type: "danger", message: "字段验证失败，请检查后提交!" });
+      wait.value = false;
+    });
 };
 // 上传头像到服务器,用户头像大于2M时进行压缩
-const uploadImage = (file: UploaderFileListItem) => {
+const uploadImage = async (file: UploaderFileListItem) => {
   file.status = "uploading";
   file.message = "上传中...";
-  console.log(file);
   if (file.file?.type === "image/jpg" || "image/jpeg" || "image/png") {
     if ((file.file?.size as number) > 1024 * 1024 * 2) {
       file.message = "压缩中...";
       compressAccurately(file.file as Blob, 1000).then((value) => {
-        const imageReader = new FileReader();
-        imageReader.onload = (e) => {
-          file.content = e.target?.result as string;
+        filetoDataURL(value).then((dataUrl) => {
           service
             .post(
               "./uploadAvatar",
@@ -249,8 +295,8 @@ const uploadImage = (file: UploaderFileListItem) => {
                   "image/",
                   ""
                 )}`,
-                avatarSize: file.content.length,
-                avatar: file.content.replace(/data:image\/\w+;base64,/, ""),
+                avatarSize: dataUrl.length,
+                avatar: dataUrl.replace(/data:image\/\w+;base64,/, ""),
               })
             )
             .then((res) => {
@@ -263,8 +309,7 @@ const uploadImage = (file: UploaderFileListItem) => {
               file.message = "上传失败";
               file.status = "failed";
             });
-        };
-        imageReader.readAsDataURL(value);
+        });
       });
     } else {
       service
@@ -335,10 +380,11 @@ service.get("/classGeneralApi").then((res) => {
   .van-cell {
     margin: 2rem 0;
 
-    &:last-child.van-cell__value--alone {
-      text-align: center;
+    &::deep(.van-cell__value) {
+      .van-cell__value--alone {
+        text-align: center;
+      }
     }
-
     .stuPhoto {
       margin-bottom: 0.5rem;
     }
@@ -347,10 +393,6 @@ service.get("/classGeneralApi").then((res) => {
   .van-button {
     width: 8rem;
     height: 2rem;
-  }
-
-  .van-cell__value {
-    text-align: center;
   }
 }
 

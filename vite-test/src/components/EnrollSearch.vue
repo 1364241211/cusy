@@ -89,8 +89,26 @@ const setUserInfo = (res: AxiosResponse) => {
   userInfo.class_id = res.data.info.class_id;
   userInfo.customer_logtime = res.data.info.customer_logtime;
   userInfo.customer_photo = res.data.info.customer_photo;
-  userInfo.is_valided = res.data.info.is_valided == "0" ? "未通过" : "通过";
-  validedColor.value = res.data.info.is_valided == "0" ? "red" : "green";
+  switch (res.data.info.is_valided) {
+    case 0:
+      {
+        userInfo.is_valided = "审核中...";
+        validedColor.value = "blue";
+      }
+      break;
+    case 1:
+      {
+        userInfo.is_valided = "审核通过";
+        validedColor.value = "green";
+      }
+      break;
+    case 2:
+      {
+        userInfo.is_valided = "被驳回,请联系管理员";
+        validedColor.value = "red";
+      }
+      break;
+  }
 };
 const search = () => {
   if (searchValue.value !== "") {

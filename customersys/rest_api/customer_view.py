@@ -1,16 +1,16 @@
-from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.views import APIView
-from django.middleware.csrf import get_token
-from rest_framework_simplejwt.views import TokenObtainPairView
 from django.db.models import Q
+from django.middleware.csrf import get_token
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .authentication import isLoginJWTAuthentication, customerTokenAuthentication
-from .serializer import customerSerializer, customerTokenObtainSerializer, classSerializer
+from .base64Tobyte import base64ToImage
+from .message import message
 from .models import Customers, Class
 from .pagination import customersPagination
-from .message import message
-from .base64Tobyte import base64ToImage
+from .serializer import customerSerializer, customerTokenObtainSerializer, classSerializer
 
 
 class customerApiViewSet(ModelViewSet):
@@ -24,10 +24,9 @@ class customerApiViewSet(ModelViewSet):
     authentication_classes = [isLoginJWTAuthentication]
 
     def list(self, request, *args, **kwargs):
-        if "is_valided" in request.GET:
-            is_valided = request.GET.get("is_valided")
-            self.queryset = Customers.objects.filter(
-                is_valided=is_valided).order_by("id")
+        if "ex_is_valided" in request.GET:
+            ex_is_valided = request.GET.get("ex_is_valided")
+            self.queryset = Customers.objects.exclude(is_valided=ex_is_valided).order_by("id")
         return super().list(request)
 
     def create(self, request, *args, **kwargs):
@@ -90,13 +89,16 @@ class customerApiViewSet(ModelViewSet):
                 message(status='failed', code=403, message=e.args[0], kwargs={"info": content}), status=200)
 
     def updateAll(self, request):
+        if "status" not in request.GET:
+            return Response(message("failed", code=403, message="status字段是必须的!"))
+        status = request.GET.get("status")
         dataList = request.data.get("idList")
         messageList = list()
         try:
             if dataList:
                 for data in dataList:
                     customer = Customers.objects.get(pk=data)
-                    customer.is_valided = 1
+                    customer.is_valided = status
                     customer.save()
                     newMessage = message(
                         status="success", code=200, message="OK")
@@ -174,6 +176,7 @@ class classViewSet(ModelViewSet):
         return super().list(request)
 
     def create(self, request, *args, **kwargs):
+        classInfo = request.data
         pass
 
     def destroy(self, request, *args, **kwargs):

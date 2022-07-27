@@ -27,7 +27,18 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "192.168.2.103",
+        target: "192.168.2.103:8000",
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    host: "192.168.2.103",
+    port: 3000,
+
+    proxy: {
+      "/api": {
+        target: "192.168.2.103:8000",
         changeOrigin: true,
       },
     },

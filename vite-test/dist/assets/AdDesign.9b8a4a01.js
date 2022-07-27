@@ -1,1 +1,0 @@
-import{_ as e}from"./plugin-vue_export-helper.f63bf49c.js";import{ao as n,ay as o}from"./index.5896ee19.js";const r={};function s(c,t){return n(),o("div",null," This is AdDesign Page ")}const _=e(r,[["render",s]]);export{_ as default};

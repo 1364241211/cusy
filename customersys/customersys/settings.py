@@ -195,13 +195,13 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 
 # 配置白名单
-# CORS_ORIGIN_WHITELIST = (
-#     '*'
-#     # '127.0.0.1:8000',
-#     # 'localhost:8000',
-#     # '127.0.0.1:8080',
-#     # 'localhost:8080',
-#     # 'ads-cms-api.aataotao.com:8000'  #
-#     # 'taoduoduo-test.oss-cn-shenzhen.aliyuncs.com:80',  # 线上
-#     # '10.0.2.187:8080'  # 本地
-# )
+CORS_ORIGIN_WHITELIST = (
+    '*'
+    # '127.0.0.1:8000',
+    # 'localhost:8000',
+    # '127.0.0.1:8080',
+    # 'localhost:8080',
+    # 'ads-cms-api.aataotao.com:8000'  #
+    # 'taoduoduo-test.oss-cn-shenzhen.aliyuncs.com:80',  # 线上
+    # '10.0.2.187:8080'  # 本地
+)
