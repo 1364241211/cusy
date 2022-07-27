@@ -1,0 +1,1 @@
+System.register(["./plugin-vue_export-helper-legacy.e4add995.js","./index-legacy.0f392b2c.js"],(function(e){"use strict";var t,n,r;return{setters:[e=>{t=e._},e=>{n=e.ao,r=e.ay}],execute:function(){e("default",t({},[["render",function(e,t){return n(),r("div",null," This is AdDesign Page ")}]]))}}}));

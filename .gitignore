@@ -1,0 +1,4 @@
+## ignore this files ##
+/customersys/*.ini
+/customersys/*.log
+/customersys/*.pid

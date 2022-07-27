@@ -1,0 +1,1 @@
+System.register(["./plugin-vue_export-helper-legacy.e4add995.js","./index-legacy.0f392b2c.js"],(function(e){"use strict";var t,r,n;return{setters:[e=>{t=e._},e=>{r=e.ao,n=e.ay}],execute:function(){e("default",t({},[["render",function(e,t){return r(),n("div",null," 提交成功，验证信息稍后发到您的手机上 ")}]]))}}}));
