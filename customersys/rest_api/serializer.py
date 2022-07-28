@@ -1,5 +1,6 @@
-from hashlib import md5
 import time
+from hashlib import md5
+
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -77,6 +78,7 @@ class classSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
         fields = '__all__'
+        read_only_field = ('id',)
 
 
 # admin用户token序列化器

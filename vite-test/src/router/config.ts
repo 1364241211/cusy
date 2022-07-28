@@ -54,16 +54,16 @@ const routes: RouteRecordRaw[] = [
         name: "adDesign",
         component: () => import("../components/AdDesign.vue"),
       },
-		{
-				path:"/admin/controlPanel/moderateUsers",
-				name:"moderateUsers",
-				component:() =>import("../components/ValidateCustomers.vue"),
-		},
-				{
-						path:"/admin/controlPanel/classesControl",
-						name:"classesControl",
-						component:()=>import("../components/ClassesControl.vue")
-				}
+      {
+        path: "/admin/controlPanel/moderateUsers",
+        name: "moderateUsers",
+        component: () => import("../components/ValidateCustomers.vue"),
+      },
+      {
+        path: "/admin/controlPanel/classesControl",
+        name: "classesControl",
+        component: () => import("../components/ClassesControl.vue"),
+      },
     ],
     meta: {
       requireAuth: true,
@@ -71,4 +71,4 @@ const routes: RouteRecordRaw[] = [
   },
 ];
 
-export default routes
+export default routes;

@@ -185,7 +185,7 @@ const calssFiltersMethod = (
   console.log(value);
   console.log(row);
   console.log(column);
-  return row[property] === value;
+  return row[property as keyof customer] === value;
 };
 // 重制班级过滤
 const restClassFilter = () => {

@@ -7,6 +7,7 @@ export {}
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
+    AddClass: typeof import('./src/components/AddClass.vue')['default']
     AdDesign: typeof import('./src/components/AdDesign.vue')['default']
     AddToCustomer: typeof import('./src/components/AddToCustomer.vue')['default']
     ClassesControl: typeof import('./src/components/ClassesControl.vue')['default']

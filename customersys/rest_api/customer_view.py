@@ -168,7 +168,7 @@ class classViewSet(ModelViewSet):
     """
     班级内容api
     """
-    queryset = Class.objects.all()
+    queryset = Class.objects.all().order_by("id")
     serializer_class = classSerializer
     authentication_classes = [isLoginJWTAuthentication]
 
@@ -177,10 +177,29 @@ class classViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         classInfo = request.data
-        pass
+        try:
+            self.get_queryset().get(class_name=classInfo.get('class_name'))
+            return Response(message("failed", 403, "class is exist"))
+        except Exception as e:
+            classSer = classSerializer(data=classInfo)
+            if not classSer.is_valid():
+                return Response(message("failed", "403", "failed to add Class", kwargs={"info": classSer.errors}))
+            classSer.save()
+            return Response(message("success", 200, "create class successfully"))
 
     def destroy(self, request, *args, **kwargs):
-        pass
+        if "idList" not in request.data:
+            return Response("failed", 404, "idList param is necessary")
+        idList = request.data.get("idList")
+        try:
+            if idList:
+                for id in idList:
+                    classInfo = self.get_queryset().get(pk=id)
+                    classInfo.delete()
+                return Response(message("success", 200, "classes is already deleted"))
+            return Response(message("failed", 404, "idList 列表为空"))
+        except Exception as e:
+            return Response(message("failed", 404, "class is not exist"))
 
 
 class classGeneralApi(APIView):

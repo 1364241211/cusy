@@ -7,8 +7,8 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 import hashlib
 
-from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.db import models
 
 
 class AdminBaseManager(BaseUserManager):
@@ -50,11 +50,7 @@ class Admin(AbstractBaseUser):
 
 class Class(models.Model):
     class_name = models.CharField(db_column='class_Name', unique=True, max_length=255)  # Field name made lowercase.
-    class_group = models.CharField(max_length=255)
-
-    class Meta:
-        managed = False
-        db_table = 'Class'
+    class_group = models.CharField(db_column='class_group', max_length=255)
 
     class Meta:
         managed = False

@@ -169,10 +169,7 @@ const statusFiltersMethod = (
   column: TableColumnCtx<customer>
 ) => {
   const property = column["property"] as string;
-  console.log(value);
-  console.log(row);
-  console.log(column);
-  return row[property] == value;
+  return row[property as keyof customer] == value;
 };
 //班级过滤方法
 const classFiltersMethod = (
@@ -181,7 +178,7 @@ const classFiltersMethod = (
   column: TableColumnCtx<customer>
 ) => {
   const property = column["property"] as string;
-  return row[property] == value;
+  return row[property as keyof customer] == value;
 };
 
 //重制班级过滤

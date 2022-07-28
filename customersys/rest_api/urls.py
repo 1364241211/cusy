@@ -30,10 +30,16 @@ admin_register = adminApiViewSet.as_view({
     'post': 'create'
 })
 admin_captcha = adminCaptchaImage.as_view({'get': 'retrieve'})
+classes = classViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+    'delete': 'destroy'
+})
 app_name = 'rest_api'
 urlpatterns = [
     path('customerGeneralApi', customer_general_api, name='customerApi'),
     path('classGeneralApi', classGeneralApi.as_view()),
+    path('classes', classes, name='classes'),
     path('uploadAvatar', uploadAvatar.as_view(), name='avatar'),
     path('validateCustomers', validate_Customer),
     path('customer/<str:param>', customer_detail, name='customer-detail'),
