@@ -32,3 +32,21 @@ export interface classType {
 export interface tabType {
   title: string;
 }
+// 网络请求方法枚举
+export enum METHOD {
+  GET = "GET",
+  POST = "POST",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
+}
+// 网络响应信息
+interface messageInfo {
+  [props: string]: any;
+}
+// 网路响应格式
+export interface resMessage {
+  code?: number;
+  message?: string;
+  status?: string;
+  info?: string | Array<any> | number;
+}

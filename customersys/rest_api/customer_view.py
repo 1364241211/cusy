@@ -1,3 +1,5 @@
+import time
+
 from django.db.models import Q
 from django.middleware.csrf import get_token
 from rest_framework.response import Response
@@ -10,7 +12,7 @@ from .base64Tobyte import base64ToImage
 from .message import message
 from .models import Customers, Class
 from .pagination import customersPagination
-from .serializer import customerSerializer, customerTokenObtainSerializer, classSerializer
+from .serializer import (customerSerializer, customerTokenObtainSerializer, classSerializer, mdResSerializer)
 
 
 class customerApiViewSet(ModelViewSet):
@@ -218,6 +220,48 @@ class uploadAvatar(APIView):
                           request.data.get("avatarName")).toImage()
             return Response(message("success", 200, message="Ok"))
         return Response(message("failed", 404, message="上传头像失败"))
+
+
+class uploadMdRes(APIView):
+    authentication_classes = [isLoginJWTAuthentication]
+
+    def post(self, request):
+        if not "file" in request.data:
+            return Response(message("failed", 400, "file 参数是必须的"))
+        IMAGE_TYPE = ("png", "jpg", "jpeg")
+        VIDEO_TYPE = ("mp4",)
+        file = request.data.get("file")
+        if file.get("fileType") in IMAGE_TYPE:
+            mdImagePath = base64ToImage(file.get("body"), str(int(time.time())), file.get("fileType")).toMdImage()
+            res = mdResSerializer(data={"res_name": mdImagePath})
+            if not res.is_valid():
+                return Response(message("failed", 400, res.errors))
+            res.save()
+            return Response(message("success", 200, "图片上传成功!", kwargs={"info": mdImagePath}))
+        elif file.get("fileType") in VIDEO_TYPE:
+            mdVideoPath = base64ToImage(file.get("body"), str(int(time.time())), file.get("fileType")).toMdVideo()
+            res = mdResSerializer(data={"res_name": mdVideoPath})
+            if not res.is_valid():
+                return Response(message("failed", 400, res.errors))
+            res.save()
+            return Response(message("success", 200, "视频上传成功!", kwargs={"info": mdVideoPath}))
+        return Response(message("failed", 403, "文件类型不允许上传"))
+
+
+class saveMd(APIView):
+    authentication_classes = [isLoginJWTAuthentication]
+
+    def get(self, request):
+        info = base64ToImage("1", "1", "1").readMd()
+        return Response(message("success", 200, "请求成功", kwargs={"info": info}))
+
+    def post(self, request):
+        if "file" not in request.data:
+            return Response(message("failed", 400, "file 参数是必须的"))
+        file = request.data.get("file")
+        print(file.get("body"))
+        base64ToImage(file.get("body"), "ad", "md").saveMd()
+        return Response(message("success", 200, "文件保存成功!"))
 
 
 class customerTokenObtainView(TokenObtainPairView):

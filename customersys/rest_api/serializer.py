@@ -4,7 +4,7 @@ from hashlib import md5
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Admin, Customers, Class
+from .models import Admin, Customers, Class, Resources
 
 
 # admin用户序列化器
@@ -77,6 +77,18 @@ class classSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Class
+        fields = '__all__'
+        read_only_field = ('id',)
+
+
+class mdResSerializer(serializers.ModelSerializer):
+    res_name = serializers.CharField(max_length=255)
+
+    def create(self, validated_data):
+        return Resources.objects.create(**validated_data)
+
+    class Meta:
+        model = Resources
         fields = '__all__'
         read_only_field = ('id',)
 

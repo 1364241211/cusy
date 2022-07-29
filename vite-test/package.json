@@ -9,9 +9,7 @@
   },
   "dependencies": {
     "@element-plus/icons": "^0.0.11",
-    "@kangc/v-md-editor": "^2.3.15",
     "@types/crypto-js": "^4.1.1",
-    "@types/prismjs": "^1.26.0",
     "@vitejs/plugin-legacy": "^2.0.0",
     "add": "^2.0.6",
     "axios": "^0.27.2",
@@ -20,6 +18,7 @@
     "eslint-plugin-vue": "^9.2.0",
     "image-conversion": "^2.1.1",
     "jwt-decode": "^3.1.2",
+    "md-editor-v3": "^2.2.1",
     "node-sass": "^7.0.1",
     "pinia": "^2.0.14",
     "sass": "^1.53.0",

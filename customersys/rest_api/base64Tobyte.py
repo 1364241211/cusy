@@ -5,11 +5,41 @@ from django.conf import settings
 
 
 class base64ToImage:
-    def __init__(self, base64str: str, avatarName: str):
+    def __init__(self, base64str: str, avatarName: str, fileType: str):
         self.base64str = base64str,
         self.avatarName = avatarName
+        self.fileType = fileType
 
     def toImage(self):
         byteImage = base64.b64decode(str(self.base64str))
         with open(os.path.join(settings.STATICFILES_DIRS[0], "avatar/{}".format(self.avatarName)), "wb") as f:
             f.write(byteImage)
+
+    def toMdImage(self):
+        byteImage = base64.b64decode(str(self.base64str))
+        with open(os.path.join(settings.STATICFILES_DIRS[0], "md/image/{}.{}".format(self.avatarName, self.fileType)),
+                  "wb") as f:
+            f.write(byteImage)
+        mdImagePath = "/md/image/{}.{}".format(self.avatarName, self.fileType)
+        return mdImagePath
+
+    def toMdVideo(self):
+        byteImage = base64.b64decode(str(self.base64str))
+        with open(os.path.join(settings.STATICFILES_DIRS[0], "md/video/{}.{}".format(self.avatarName, self.fileType)),
+                  "wb") as f:
+            f.write(byteImage)
+        mdVideoPath = "/md/video/{}.{}".format(self.avatarName, self.fileType)
+        return mdVideoPath
+
+    def saveMd(self):
+        content = bytes(str(self.base64str[0]), encoding='ascii').decode('unicode-escape')
+
+        with open(os.path.join(settings.STATICFILES_DIRS[0], "md/{}.{}".format(self.avatarName, self.fileType)),
+                  "w") as f:
+            f.write(str(content))
+
+    def readMd(self):
+        content = str()
+        with open(os.path.join(settings.STATICFILES_DIRS[0], "md/ad.md"), "r") as f:
+            content = f.read()
+        return content

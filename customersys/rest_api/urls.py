@@ -10,6 +10,8 @@ from .customer_view import (customerGeneralApi,
                             customerTokenObtainView,
                             customerApiViewSet,
                             uploadAvatar,
+                            uploadMdRes,
+                            saveMd,
                             classGeneralApi,
                             classViewSet)
 
@@ -41,6 +43,8 @@ urlpatterns = [
     path('classGeneralApi', classGeneralApi.as_view()),
     path('classes', classes, name='classes'),
     path('uploadAvatar', uploadAvatar.as_view(), name='avatar'),
+    path('uploadMdRes', uploadMdRes.as_view(), name='res'),
+    path('uploadMd', saveMd.as_view(), name="md"),
     path('validateCustomers', validate_Customer),
     path('customer/<str:param>', customer_detail, name='customer-detail'),
     path('customers', customers, name='customers'),

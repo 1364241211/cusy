@@ -17,16 +17,6 @@ import { Tabs, Tab } from "vant";
 
 import { createPinia } from "pinia";
 import router from "./router";
-import VueMarkdownEditor from "@kangc/v-md-editor";
-import "@kangc/v-md-editor/lib/style/base-editor.css";
-import vuepressTheme from "@kangc/v-md-editor/lib/theme/vuepress.js";
-import "@kangc/v-md-editor/lib/theme/style/vuepress.css";
-
-import Prism from "prismjs";
-
-VueMarkdownEditor.use(vuepressTheme, {
-  Prism,
-});
 
 import * as Icons from "@element-plus/icons";
 const pinia = createPinia();
@@ -34,7 +24,7 @@ const pinia = createPinia();
 const app = createApp(App);
 
 app.use(pinia).use(router);
-app.use(Tab).use(Tabs).use(VueMarkdownEditor);
+app.use(Tab).use(Tabs);
 app.mount("#app");
 // // 创建Icon组件
 // const Icon = (props: { icon: string }) => {
