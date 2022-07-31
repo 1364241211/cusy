@@ -68,12 +68,11 @@
         </van-popup>
         <van-field
           name="customer_photo"
+          type="file"
           required
           label="学生照片"
-          :rules="formRules.customer_photo"
-          input-align="center"
+          input-align="left"
           center
-          clearable
         >
           <template #input>
             <van-icon
@@ -83,11 +82,12 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                background-color: gray;
+                background-color: #d4d1d1;
                 width: 5rem;
                 height: 5rem;
               "
               v-if="!fileInputExist"
+              color="white"
               @click="chooseFile"
             />
             <input
@@ -98,19 +98,37 @@
               accept="image/jpg,image/jpeg,image/png"
               v-show="false"
             />
-            <van-image
-              fit="cover"
-              position="center"
-              :src="previewAvatar"
-              v-show="fileInputExist"
-            ></van-image>
-            <van-loading
-              v-if="fileInputExist"
-              color="#fff"
-              text-color="#fff"
-              vertical
-              >{{}}</van-loading
-            >
+            <div class="van-image-div">
+              <van-icon
+                name="cross"
+                style="
+                  height: 14px;
+                  width: 14px;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  position: absolute;
+                  z-index: 999;
+                  top: -7px;
+                  right: -7px;
+                  background: rgba(0, 0, 0, 0.4);
+                  border-radius: 50%;
+                "
+                color="rgba(255,255,255,.5)"
+                v-if="fileInputExist"
+                @click="clearImage"
+              />
+              <van-image
+                fit="cover"
+                position="center"
+                :src="previewAvatar"
+                height="5rem"
+                width="5rem"
+                style="border: 1px rgba(0, 0, 0, 0.3) solid"
+                v-if="fileInputExist"
+              >
+              </van-image>
+            </div>
           </template>
         </van-field>
 
@@ -124,8 +142,8 @@
             :loading="wait"
             loading-text="提交中，请稍等..."
             @click="submitForm"
-            >提交</van-button
-          >
+            >提交
+          </van-button>
         </van-cell>
       </van-cell-group>
     </van-form>
@@ -144,8 +162,8 @@
         <div class="button-group">
           <van-button type="success" @click="enterUpdateCus">是</van-button>
           <van-button type="danger" @click="router.push({ name: 'success' })"
-            >否</van-button
-          >
+            >否
+          </van-button>
         </div>
       </div>
     </van-popup>
@@ -166,7 +184,6 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from "vue";
 import { FieldRule, FormInstance, Notify } from "vant";
-import type { UploaderFileListItem } from "vant/lib/uploader/types";
 import PreviewMdVue from "./PreviewMd.vue";
 
 import router from "../router";
@@ -251,7 +268,6 @@ const formRules = reactive({
     { validator: vaildphone, trigger: "onChange", required: true },
   ] as FieldRule[],
   class_name: [{ required: true }],
-  customer_photo: [{ required: true }],
 });
 
 // 点击图标触发input选择文件
@@ -260,15 +276,25 @@ const chooseFile = () => {
     const IMAGE_TYPE = ["image/png", "image/jpg", "image/jpeg"];
     const file = fileInput.value?.files?.item(0);
     if (IMAGE_TYPE.includes(file?.type as string)) {
-      //const { dataUrl, size, error } =await useImageCompress(file!);
-      useImageCompress(file!).then(({ dataUrl, size, error }) => {
-        previewAvatar.value = `data:${file?.type},base64,${dataUrl.value}`;
-		console.log(previewAvatar.value)
+      useImageCompress(file!).then(({ realUrl }) => {
         fileInputExist.value = true;
+        previewAvatar.value = realUrl.value as string;
+        console.log(previewAvatar.value);
       });
+    } else {
+      Notify({ type: "danger", message: "图片类型只能为.jpg .jpeg .png" });
     }
   });
   fileInput.value?.click();
+};
+
+// 点击关闭图标 清除图片
+const clearImage = () => {
+  previewAvatar.value = "";
+  fileInputExist.value = false;
+  if (fileInput.value?.value) {
+    fileInput.value!.value = "";
+  }
 };
 
 // 用户身份身份证是否存在
@@ -285,9 +311,10 @@ const subPost = async () => {
       parent_phone: form.par_phone,
       class_id: form.class_id,
       class_name: form.class_name,
-      customer_photo: `${form.customer_id}.${form.customer_photo
-        .at(0)
-        ?.file?.type.replace("image/", "")}`,
+      customer_photo: `${form.customer_id}.${fileInput.value?.type.replace(
+        "image/",
+        ""
+      )}`,
     })
   );
   if (res.value) {
@@ -295,7 +322,7 @@ const subPost = async () => {
       case 200:
         {
           // 上传用户信息成功时，上传用户头像
-          await uploadImage(form.customer_photo.at(0) as UploaderFileListItem);
+          await uploadImage();
           Notify({ type: "success", message: "提交成功,两秒后跳转。" });
           setTimeout(() => {
             router.push({ name: "success" });
@@ -325,6 +352,10 @@ const enterUpdateCus = async () => {
 
 // 当用户点击提交时，提交表单继续规则检验
 const submitForm = () => {
+  if (fileInput.value?.value.length === 0) {
+    Notify({ type: "danger", message: "请选择学生照片" });
+    return;
+  }
   wait.value = true;
   formInstance.value
     ?.validate()
@@ -347,41 +378,30 @@ const submitForm = () => {
         });
     })
     .catch(() => {
-      Notify({ type: "danger", message: "字段验证失败，请检查后提交!" });
+      Notify({ type: "danger", message: "表单字段验证失败，请检查后提交!" });
       wait.value = false;
     });
 };
 
-// 上传头像到服务器,用户头像大于2M时进行压缩
-const uploadImage = async (file: UploaderFileListItem) => {
-  file.status = "uploading";
-  file.message = "上传中...";
-  console.log(file);
-  if (file.file?.type === "image/jpg" || "image/jpeg" || "image/png") {
-    const { dataUrl, size } = await useImageCompress(file.file as Blob);
-    const { res, error } = await useRequest(
-      "./uploadAvatar",
-      METHOD.POST,
-      JSON.stringify({
-        avatarName: `${form.customer_id}.${file.file?.type.replace(
-          "image/",
-          ""
-        )}`,
-        avatarSize: size,
-        avatar: dataUrl.value,
-      })
-    );
-    if (res.value) {
-      switch (res.value.code) {
-        case 200:
-          file.status = "done";
-      }
-    } else if (error.value) {
-      file.message = "上传失败";
-      file.status = "failed";
+// 上传头像到服务器
+const uploadImage = async () => {
+  const file = fileInput.value?.files?.item(0);
+  const { dataUrl, size } = await useImageCompress(file as Blob);
+  const { res, error } = await useRequest(
+    "./uploadAvatar",
+    METHOD.POST,
+    JSON.stringify({
+      avatarName: `${form.customer_id}.${file?.type.replace("image/", "")}`,
+      avatarSize: size.value,
+      avatar: dataUrl.value,
+    })
+  );
+  if (res.value) {
+    switch (res.value.code) {
+      case 200:
     }
-  } else {
-    Notify({ type: "danger", message: "文件类型为jpg,jpeg,png" });
+  } else if (error.value) {
+    Notify({ type: "danger", message: error.value });
   }
 };
 
@@ -431,6 +451,7 @@ onMounted(() => {
         text-align: center;
       }
     }
+
     .stuPhoto {
       margin-bottom: 0.5rem;
     }
@@ -470,5 +491,10 @@ onMounted(() => {
       margin: 0 1rem;
     }
   }
+}
+.van-image-div {
+  position: relative;
+  width: fit-content;
+  height: fit-content;
 }
 </style>

@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 import MdEditor, { ToolbarNames } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 import { useRequest } from "../hooks/useReqest";
@@ -72,7 +72,6 @@ const video = ref<File | undefined | null>();
 const text = ref("");
 // 创建防抖 避免多次请求
 const state = ref(false);
-
 
 // 当点击保存按钮时保存文档
 const saveMd = async (value: string) => {
@@ -123,7 +122,7 @@ const handUploadImg = async (
   }
   if (res.value) {
     console.log(res.value);
-    callback([`http://192.168.2.103/static${res.value.info as string}`]);
+    callback([`/static${res.value.info as string}`]);
   }
 };
 
@@ -154,7 +153,7 @@ const handleVideo = async () => {
         text.value =
           text.value +
           `<video controls preload='autoplay' name="media" width="100%" height="300">\r\n\t<source src='${
-            "http://192.168.2.103/static" + res.value?.info
+            "/static" + res.value?.info
           }' type="video/mp4">\r\n</video>\r\n`;
       } else if (error.value) {
         ElMessage.error(error.value);
@@ -173,8 +172,8 @@ onMounted(async () => {
   } else if (error.value) {
     ElMessage.error(error.value);
   }
-  console.log(res.value);
-  console.log(error.value);
+  //console.log(res.value);
+  //console.log(error.value);
 });
 </script>
 

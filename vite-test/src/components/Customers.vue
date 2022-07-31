@@ -1,145 +1,151 @@
 <template>
   <div>
-    <el-header>
-      <el-button-group>
-        <el-button
-          type="warning"
-          :disabled="buttonEnable"
-          :icon="CircleClose"
-          @click="moderateUsers(2)"
-          >驳回 ({{ buttonEnable ? 0 : selectionRows }})</el-button
-        >
-      </el-button-group>
-      <el-input
-        v-model="search"
-        placeholder="请输入查询关键字"
-        @input="searchCustomer"
-        clearable
-        :prefix-icon="Search"
-        @clear="clearSearch"
-      />
-    </el-header>
-
-    <el-table
-      :data="tableData"
-      ref="tableInstance"
-      max-height="800"
-      v-loading="tableLoading"
-      element-loading-text="加载中"
-      @selection-change="columnSelect"
-      border
-      stripe
-    >
-      <el-table-column type="selection"></el-table-column>
-      <el-table-column
-        label="Id"
-        width="70"
-        height="10"
-        prop="id"
-        fit
-        align="center"
-      >
-      </el-table-column>
-      <el-table-column
-        prop="customer_name"
-        label="学生姓名"
-        width="100"
-        align="center"
-      ></el-table-column>
-      <el-table-column prop="customer_photo" label="学生照片" align="center">
-        <template #default="scope">
-          <div
-            style="display: flex; align-items: center; justify-content: center"
+    <el-config-provider :locale="locale">
+      <el-header>
+        <el-button-group>
+          <el-button
+            type="warning"
+            :disabled="buttonEnable"
+            :icon="CircleClose"
+            @click="moderateUsers(2)"
+            >驳回 ({{ buttonEnable ? 0 : selectionRows }})</el-button
           >
-            <el-image
-              :src="'/static/avatar/' + scope.row.customer_photo"
-              style="height: 100px; width: 80px"
-              fit="cover"
-              :lazy="true"
-              :preview-src-list="pre_src_list"
-              :preview-teleported="true"
-              :initial-index="pre_init_index"
-              @click="changeInitIndex(scope.$index)"
+        </el-button-group>
+        <el-input
+          v-model="search"
+          placeholder="请输入查询关键字"
+          @input="searchCustomer"
+          clearable
+          :prefix-icon="Search"
+          @clear="clearSearch"
+        />
+      </el-header>
+
+      <el-table
+        :data="tableData"
+        ref="tableInstance"
+        max-height="800"
+        v-loading="tableLoading"
+        element-loading-text="加载中"
+        @selection-change="columnSelect"
+        border
+        stripe
+      >
+        <el-table-column type="selection"></el-table-column>
+        <el-table-column
+          label="Id"
+          width="70"
+          height="10"
+          prop="id"
+          fit
+          align="center"
+        >
+        </el-table-column>
+        <el-table-column
+          prop="customer_name"
+          label="学生姓名"
+          width="100"
+          align="center"
+        ></el-table-column>
+        <el-table-column prop="customer_photo" label="学生照片" align="center">
+          <template #default="scope">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
             >
-            </el-image>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="customer_id"
-        label="学生身份证号"
-        align="center"
-      ></el-table-column>
-      <el-table-column
-        prop="parent_phone"
-        label="家长手机号"
-        align="center"
-      ></el-table-column>
-      <el-table-column
-        prop="class_name"
-        label="学生批次"
-        align="center"
-        :filters="classFilters"
-        :filter-method="calssFiltersMethod"
-      ></el-table-column>
-      <el-table-column
-        prop="customer_logtime"
-        label="学生登记时间"
-        align="center"
-      ></el-table-column>
-      <el-table-column align="center" label="操作">
-        <template #default="tail">
-          <el-button-group>
-            <!----<div class="button-groups">--->
-            <el-button
-              type="primary"
-              size="small"
-              :icon="Edit"
-              @click="updateCustomer(tail.$index)"
-              >修改</el-button
-            >
-            <el-button
-              type="danger"
-              size="small"
-              :icon="Delete"
-              @click="deleteCustomer(tail.$index)"
-              >删除</el-button
-            >
-            <!----<el-button
+              <el-image
+                :src="'/static/avatar/' + scope.row.customer_photo"
+                style="height: 100px; width: 80px"
+                fit="cover"
+                :lazy="true"
+                :preview-src-list="pre_src_list"
+                :preview-teleported="true"
+                :initial-index="pre_init_index"
+                @click="changeInitIndex(scope.$index)"
+              >
+              </el-image>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="customer_id"
+          label="学生身份证号"
+          align="center"
+        ></el-table-column>
+        <el-table-column
+          prop="parent_phone"
+          label="家长手机号"
+          align="center"
+        ></el-table-column>
+        <el-table-column
+          prop="class_name"
+          label="学生批次"
+          align="center"
+          :filters="classFilters"
+          :filter-method="calssFiltersMethod"
+        ></el-table-column>
+        <el-table-column
+          prop="customer_logtime"
+          label="学生登记时间"
+          align="center"
+        ></el-table-column>
+        <el-table-column align="center" label="操作">
+          <template #default="tail">
+            <el-button-group>
+              <!----<div class="button-groups">--->
+              <el-button
+                type="primary"
+                size="small"
+                :icon="Edit"
+                @click="updateCustomer(tail.$index)"
+                >修改</el-button
+              >
+              <el-button
+                type="danger"
+                size="small"
+                :icon="Delete"
+                @click="deleteCustomer(tail.$index)"
+                >删除</el-button
+              >
+              <!----<el-button
               type="warning"
               @click="rejectCustomer(tail.$index)"
               size="small"
             >
               驳回
             </el-button>--->
-            <!---</div>--->
-          </el-button-group>
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-pagination
-      v-model:current-page="currentPage"
-      v-model:page-size="pageSize"
-      v-model:page-sizes="pageSizeList"
-      v-model:total="pagnation.count"
-      layout="total,prev, pager, next,jumper,sizes"
-      background
-      @size-change="sizeChange"
-      @current-change="jumpPage"
-    />
-    <el-drawer
-      title="修改"
-      v-model="drawer"
-      direction="ltr"
-      size="45%"
-      @close="destroyCom"
-    >
-      <component
-        v-if="isAlive"
-        :is="asynComp"
-        :itemProps="item_Props.data"
-      ></component>
-    </el-drawer>
+              <!---</div>--->
+            </el-button-group>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        v-model:page-sizes="pageSizeList"
+        v-model:total="pagnation.count"
+        layout="total,prev, pager, next,jumper,sizes"
+        background
+        @size-change="sizeChange"
+        @current-change="jumpPage"
+      />
+      <el-drawer
+        title="修改"
+        v-model="drawer"
+        direction="ltr"
+        size="45%"
+        @close="destroyCom"
+      >
+        <component
+          v-if="isAlive"
+          :is="asynComp"
+          :itemProps="item_Props.data"
+        ></component>
+      </el-drawer>
+    </el-config-provider>
   </div>
 </template>
 
@@ -148,12 +154,14 @@ import { ref, reactive, watch, defineAsyncComponent, inject } from "vue";
 import { ElMessage, ElMessageBox, ElTable } from "element-plus";
 import type { TableColumnCtx } from "element-plus/es/components/table/src/table-column/defaults";
 import { AxiosResponse } from "axios";
+import zhCn from "element-plus/lib/locale/lang/zh-cn";
 
 import { Delete, Edit, Search, CircleClose } from "@element-plus/icons";
 
 import { classType, customer, pagnationData } from "../types/index";
 import service from "../util/api";
 
+const locale = zhCn;
 const buttonEnable = ref(true);
 const selectionRows = ref(0);
 const isAlive = ref(false);

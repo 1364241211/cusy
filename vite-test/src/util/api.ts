@@ -3,7 +3,7 @@ import cookies from "../cookies/index";
 
 let csrf_token: string = cookies.cookies.get("csrftoken");
 const service = axios.create({
-  baseURL: "http://192.168.2.103:8000/api",
+  baseURL: "/api",
   timeout: 60000,
   withCredentials: true,
   headers: {

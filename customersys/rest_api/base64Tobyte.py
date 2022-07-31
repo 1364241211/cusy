@@ -32,8 +32,9 @@ class base64ToImage:
         return mdVideoPath
 
     def saveMd(self):
-        content = bytes(str(self.base64str[0]), encoding='ascii').decode('unicode-escape')
-
+        # byteContent = bytes(self.base64str[0], encoding="ascii")
+        # content = byteContent.decode('unicode-escape')
+        content = self.base64str[0]
         with open(os.path.join(settings.STATICFILES_DIRS[0], "md/{}.{}".format(self.avatarName, self.fileType)),
                   "w") as f:
             f.write(str(content))

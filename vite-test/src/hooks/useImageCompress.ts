@@ -3,6 +3,7 @@ import { ref } from "vue";
 
 export async function useImageCompress(data: Blob) {
   const dataUrl = ref<string>();
+  const realUrl = ref<string>();
   const size = ref<number>();
   const error = ref();
   let compressValue = null;
@@ -22,6 +23,7 @@ export async function useImageCompress(data: Blob) {
     error.value = err;
   }
   size.value = dataUrl.value?.length;
+  realUrl.value = dataUrl.value
   dataUrl.value = dataUrl.value?.replace(/data:\w+\/\w+;base64,/, "");
-  return { dataUrl, size, error };
+  return { dataUrl, size, error , realUrl};
 }

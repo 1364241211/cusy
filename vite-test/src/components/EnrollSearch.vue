@@ -48,6 +48,8 @@
           ></van-field>
           <van-field
             v-model="userInfo.is_valided"
+            type="textarea"
+            autosize
             readonly
             label="审核结果"
           ></van-field>
@@ -104,7 +106,7 @@ const setUserInfo = (res: AxiosResponse) => {
       break;
     case 2:
       {
-        userInfo.is_valided = "被驳回,请联系管理员";
+        userInfo.is_valided = "申请被驳回,请联系管理员";
         validedColor.value = "red";
       }
       break;
