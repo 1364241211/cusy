@@ -217,7 +217,7 @@ class uploadAvatar(APIView):
     def post(self, request):
         if "avatarSize" in request.data and request.data.get("avatarSize") != 0:
             base64ToImage(request.data.get("avatar"),
-                          request.data.get("avatarName")).toImage()
+                          request.data.get("avatarName"), 'png').toImage()
             return Response(message("success", 200, message="Ok"))
         return Response(message("failed", 404, message="上传头像失败"))
 
@@ -262,6 +262,12 @@ class saveMd(APIView):
         print(file.get("body"))
         base64ToImage(file.get("body"), "ad", "md").saveMd()
         return Response(message("success", 200, "文件保存成功!"))
+
+
+class mdGeneralApi(APIView):
+    def get(self, request):
+        info = base64ToImage("1", "1", "1").readMd()
+        return Response(message("success", 200, "请求成功", kwargs={"info": info}))
 
 
 class customerTokenObtainView(TokenObtainPairView):

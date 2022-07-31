@@ -13,7 +13,8 @@ import "element-plus/theme-chalk/src/form.scss";
 import "vant/es/notify/style/index";
 import "vant/es/empty/style/index";
 
-import { Tabs, Tab } from "vant";
+
+import { Tabs, Tab,Dialog } from "vant";
 
 import { createPinia } from "pinia";
 import router from "./router";
@@ -24,7 +25,7 @@ const pinia = createPinia();
 const app = createApp(App);
 
 app.use(pinia).use(router);
-app.use(Tab).use(Tabs);
+app.use(Tab).use(Tabs).use(Dialog);
 app.mount("#app");
 // // 创建Icon组件
 // const Icon = (props: { icon: string }) => {

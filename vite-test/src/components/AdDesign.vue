@@ -34,7 +34,7 @@ import MdEditor, { ToolbarNames } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 import { useRequest } from "../hooks/useReqest";
 import { useImageCompress } from "../hooks/useImageCompress";
-import { METHOD, resMessage } from "../types";
+import { METHOD } from "../types";
 import { ElMessage } from "element-plus";
 const NormalToolbar = MdEditor.NormalToolbar;
 const toolbars = [
@@ -73,25 +73,32 @@ const text = ref("");
 // 创建防抖 避免多次请求
 const state = ref(false);
 
+
 // 当点击保存按钮时保存文档
 const saveMd = async (value: string) => {
-  console.log(value);
-  const { res, error } = await useRequest(
-    "/uploadMd",
-    METHOD.POST,
-    JSON.stringify({
-      file: {
-        body: value,
-        fileType: "md",
-        fileSize: text.value.length,
-      },
-    })
-  );
-  if (res.value) {
-    ElMessage.success(res.value.message);
+  if (!state.value) {
     state.value = true;
-  } else if (error.value) {
-    ElMessage.error(error.value);
+    const { res, error } = await useRequest(
+      "/uploadMd",
+      METHOD.POST,
+      JSON.stringify({
+        file: {
+          body: value,
+          fileType: "md",
+          fileSize: text.value.length,
+        },
+      })
+    );
+    if (res.value) {
+      ElMessage.success(res.value.message);
+    } else if (error.value) {
+      ElMessage.error(error.value);
+    }
+    setTimeout(() => {
+      state.value = false;
+    }, 2000);
+  } else {
+    ElMessage.error("保存过于频繁,请2秒后在尝试!");
   }
 };
 // 上传图片到服务器

@@ -1,5 +1,5 @@
 <template>
-  <el-main>
+  <div class="main">
     <header>东辰饭卡登记表</header>
     <van-form
       colon
@@ -49,7 +49,12 @@
           @click="showPicker = true"
         >
         </van-field>
-        <van-popup :show="showPicker" round position="bottom">
+        <van-popup
+          :show="showPicker"
+          round
+          position="bottom"
+          style="width: 100vw"
+        >
           <van-picker
             title="学生批次"
             :columns="
@@ -66,16 +71,46 @@
           required
           label="学生照片"
           :rules="formRules.customer_photo"
+          input-align="center"
+          center
+          clearable
         >
           <template #input>
-            <van-uploader
-              v-model="form.customer_photo"
-              upload-icon="plus"
-              accept="image/jpg,image/png,image/jpeg"
-              :max-count="1"
-              result-type="dataUrl"
+            <van-icon
+              name="plus"
+              size="2rem"
+              style="
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background-color: gray;
+                width: 5rem;
+                height: 5rem;
+              "
+              v-if="!fileInputExist"
+              @click="chooseFile"
+            />
+            <input
+              ref="fileInput"
+              type="file"
+              name="customer_photo"
+              color="white"
+              accept="image/jpg,image/jpeg,image/png"
+              v-show="false"
+            />
+            <van-image
+              fit="cover"
+              position="center"
+              :src="previewAvatar"
+              v-show="fileInputExist"
+            ></van-image>
+            <van-loading
+              v-if="fileInputExist"
+              color="#fff"
+              text-color="#fff"
+              vertical
+              >{{}}</van-loading
             >
-            </van-uploader>
           </template>
         </van-field>
 
@@ -98,7 +133,7 @@
       :show="idIsExist"
       position="bottom"
       :close-on-click-overlay="false"
-      :style="{ height: '40vh' }"
+      style="height: 40vh;width: 100vw; }"
     >
       <div class="wrapper">
         <h2>通知！</h2>
@@ -114,23 +149,42 @@
         </div>
       </div>
     </van-popup>
-  </el-main>
+    <van-popup
+      v-model:show="dialogShow"
+      :close-on-click-overlay="false"
+      :closeable="dialogCancelBtn"
+      round
+      teleport="body"
+      style="text-align: center; padding: 1vh 1vw"
+    >
+      <h2 style="padding: 0; margin: 0.5vh 0vw; color: #2c3e50">通知!</h2>
+      <component :is="PreviewMdVue"></component>
+    </van-popup>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { FieldRule, FormInstance, Notify } from "vant";
 import type { UploaderFileListItem } from "vant/lib/uploader/types";
-import router from "../router";
+import PreviewMdVue from "./PreviewMd.vue";
 
+import router from "../router";
 import checkID from "../util/RegexVaild";
 import service from "../util/api";
 import type { classType } from "../types";
-import { compressAccurately, filetoDataURL } from "image-conversion";
+import { useRequest } from "../hooks/useReqest";
+import { METHOD } from "../types";
+import { useImageCompress } from "../hooks/useImageCompress";
 
+const dialogShow = ref(false);
+const dialogCancelBtn = ref(false);
 const wait = ref<boolean>(false);
 const classes = ref<Array<classType>>([]);
 const showPicker = ref(false);
+const fileInputExist = ref(false);
+const fileInput = ref<HTMLInputElement>();
+const previewAvatar = ref("");
 const formInstance = ref<FormInstance>();
 const form = reactive({
   customer_name: "",
@@ -138,7 +192,7 @@ const form = reactive({
   par_phone: "",
   class_name: "",
   class_id: 0,
-  customer_photo: new Array<UploaderFileListItem>(),
+  customer_photo: "",
 });
 
 const onConfirm = (value: any) => {
@@ -199,57 +253,76 @@ const formRules = reactive({
   class_name: [{ required: true }],
   customer_photo: [{ required: true }],
 });
+
+// 点击图标触发input选择文件
+const chooseFile = () => {
+  fileInput.value?.addEventListener("change", () => {
+    const IMAGE_TYPE = ["image/png", "image/jpg", "image/jpeg"];
+    const file = fileInput.value?.files?.item(0);
+    if (IMAGE_TYPE.includes(file?.type as string)) {
+      //const { dataUrl, size, error } =await useImageCompress(file!);
+      useImageCompress(file!).then(({ dataUrl, size, error }) => {
+        previewAvatar.value = `data:${file?.type},base64,${dataUrl.value}`;
+		console.log(previewAvatar.value)
+        fileInputExist.value = true;
+      });
+    }
+  });
+  fileInput.value?.click();
+};
+
 // 用户身份身份证是否存在
 const idIsExist = ref(false);
 
 // 提交post请求到服务器
 const subPost = async () => {
-  await service
-    .post(
-      "/customerGeneralApi",
-      JSON.stringify({
-        customer_id: form.customer_id,
-        customer_name: form.customer_name,
-        parent_phone: form.par_phone,
-        class_id: form.class_id,
-        class_name: form.class_name,
-        customer_photo: `${form.customer_id}.${form.customer_photo
-          .at(0)
-          ?.file?.type.replace("image/", "")}`,
-      })
-    )
-    .then((res) => {
-      switch (res.data.code) {
-        case 200:
-          {
-            // 上传用户信息成功时，上传用户头像
-            uploadImage(form.customer_photo.at(0) as UploaderFileListItem);
-            Notify({ type: "success", message: "提交成功,两秒后跳转。" });
-            setTimeout(() => {
-              router.push({ name: "success" });
-            }, 2000);
-            wait.value = false;
-          }
-          break;
-        case 400:
-          {
-            Notify({
-              type: "danger",
-              message: "提交失败，可能网路有波动,请稍后提交!",
-            });
-          }
-          break;
-      }
+  const { res, error } = await useRequest(
+    "/customerGeneralApi",
+    METHOD.POST,
+    JSON.stringify({
+      customer_id: form.customer_id,
+      customer_name: form.customer_name,
+      parent_phone: form.par_phone,
+      class_id: form.class_id,
+      class_name: form.class_name,
+      customer_photo: `${form.customer_id}.${form.customer_photo
+        .at(0)
+        ?.file?.type.replace("image/", "")}`,
     })
-    .catch((err) => {
-      Notify({ type: "danger", message: err.message });
-    });
+  );
+  if (res.value) {
+    switch (res.value.code) {
+      case 200:
+        {
+          // 上传用户信息成功时，上传用户头像
+          await uploadImage(form.customer_photo.at(0) as UploaderFileListItem);
+          Notify({ type: "success", message: "提交成功,两秒后跳转。" });
+          setTimeout(() => {
+            router.push({ name: "success" });
+          }, 2000);
+          wait.value = false;
+        }
+        break;
+      case 400:
+        {
+          Notify({
+            type: "danger",
+            message: "提交失败，可能网路有波动,请稍后提交!",
+          });
+        }
+        break;
+    }
+  } else if (error.value) {
+    Notify({ type: "danger", message: error.value });
+  }
 };
+
 // 当用户点击是按钮时触发事件
-const enterUpdateCus = () => {
+const enterUpdateCus = async () => {
   idIsExist.value = false;
-  subPost();
+  await subPost();
 };
+
 // 当用户点击提交时，提交表单继续规则检验
 const submitForm = () => {
   wait.value = true;
@@ -278,81 +351,54 @@ const submitForm = () => {
       wait.value = false;
     });
 };
+
 // 上传头像到服务器,用户头像大于2M时进行压缩
 const uploadImage = async (file: UploaderFileListItem) => {
   file.status = "uploading";
   file.message = "上传中...";
+  console.log(file);
   if (file.file?.type === "image/jpg" || "image/jpeg" || "image/png") {
-    if ((file.file?.size as number) > 1024 * 1024 * 2) {
-      file.message = "压缩中...";
-      compressAccurately(file.file as Blob, 1000).then((value) => {
-        filetoDataURL(value).then((dataUrl) => {
-          service
-            .post(
-              "./uploadAvatar",
-              JSON.stringify({
-                avatarName: `${form.customer_id}.${file.file?.type.replace(
-                  "image/",
-                  ""
-                )}`,
-                avatarSize: dataUrl.length,
-                avatar: dataUrl.replace(/data:image\/\w+;base64,/, ""),
-              })
-            )
-            .then((res) => {
-              switch (res.data.code) {
-                case 200:
-                  file.status = "done";
-              }
-            })
-            .catch((err) => {
-              file.message = "上传失败";
-              file.status = "failed";
-            });
-        });
-      });
-    } else {
-      service
-        .post(
-          "./uploadAvatar",
-          JSON.stringify({
-            avatarName: `${form.customer_id}.${file.file?.type.replace(
-              "image/",
-              ""
-            )}`,
-            avatarSize: file.content?.length,
-            avatar: file.content?.replace(/data:image\/\w+;base64,/, ""),
-          })
-        )
-        .then((res) => {
-          switch (res.data.code) {
-            case 200:
-              file.status = "done";
-          }
-        })
-        .catch((err) => {
-          file.message = "上传失败";
+    const { dataUrl, size } = await useImageCompress(file.file as Blob);
+    const { res, error } = await useRequest(
+      "./uploadAvatar",
+      METHOD.POST,
+      JSON.stringify({
+        avatarName: `${form.customer_id}.${file.file?.type.replace(
+          "image/",
+          ""
+        )}`,
+        avatarSize: size,
+        avatar: dataUrl.value,
+      })
+    );
+    if (res.value) {
+      switch (res.value.code) {
+        case 200:
           file.status = "done";
-        });
+      }
+    } else if (error.value) {
+      file.message = "上传失败";
+      file.status = "failed";
     }
   } else {
     Notify({ type: "danger", message: "文件类型为jpg,jpeg,png" });
   }
 };
 
-service.get("/customerGeneralApi");
-service.get("/classGeneralApi").then((res) => {
-  classes.value = res.data;
+// 组件挂载时钩子函数
+onMounted(() => {
+  service.get("/customerGeneralApi");
+  service.get("/classGeneralApi").then((res) => {
+    classes.value = res.data;
+  });
+  dialogShow.value = true;
+  setTimeout(() => {
+    dialogCancelBtn.value = true;
+  }, 100);
 });
-// service.post("/customerToken")
 </script>
 <style lang="scss" scoped>
-.el-main {
-  /**display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-**/
+.main {
   height: 90vh;
 
   header {
@@ -424,8 +470,5 @@ service.get("/classGeneralApi").then((res) => {
       margin: 0 1rem;
     }
   }
-}
-:deep(.van-popup) {
-  width: 100vw;
 }
 </style>
