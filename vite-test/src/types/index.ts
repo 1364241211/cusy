@@ -50,3 +50,9 @@ export interface resMessage {
   status?: string;
   info?: string | Array<any> | number;
 }
+export interface ListMessage<T> {
+  count?: number;
+  next?: string;
+  previous?: string;
+  results?: Array<T>;
+}

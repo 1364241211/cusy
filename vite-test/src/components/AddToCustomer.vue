@@ -79,9 +79,15 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, inject } from "vue";
+import { reactive, ref, inject, onMounted } from "vue";
 import zhCn from "element-plus/lib/locale/lang/zh-cn";
-import { ElForm, ElMessage, UploadFile, UploadUserFile } from "element-plus";
+import {
+  ElForm,
+  ElMessage,
+  FormItemRule,
+  UploadFile,
+  UploadUserFile,
+} from "element-plus";
 import type {
   UploadRawFile,
   UploadProps,
@@ -91,9 +97,11 @@ import type {
 
 import service from "../util/api";
 import checkID from "../util/RegexVaild";
-import { compressAccurately, filetoDataURL } from "image-conversion";
-import type { classType } from "../types/index";
+import type { classType, resMessage } from "../types/index";
 import { UploadRequestOptions } from "element-plus/lib/components";
+import { useImageCompress } from "../hooks/useImageCompress";
+import { useRequest } from "../hooks/useReqest";
+import { AxiosError } from "axios";
 
 interface customer {
   id: number;
@@ -130,7 +138,9 @@ const forms = reactive({
 const updateCustomerPhoto = ref<UploadUserFile[]>([
   {
     name: props.itemProps.customer_photo,
-    url: `/static/avatar/${props.itemProps.customer_photo}`,
+    url: `${import.meta.env.VITE_APP_STATIC_URL}/avatar/${
+      props.itemProps.customer_photo
+    }`,
   },
 ]);
 
@@ -144,23 +154,28 @@ const vaildName = (rule: any, value: any, callback: any) => {
     callback();
   }
 };
-const vaildId = (rule: any, value: any, callback: any) => {
+const vaildId = async (rule: any, value: any, callback: any): Promise<void> => {
   value = forms.customer_id;
   if (value === "") {
     callback(new Error("请输入身份号码！"));
   } else if (!checkID(value)) {
     callback(new Error("身份证验证未通过，请检查!"));
   } else {
-    service.get(`/customerGeneralApi?customer_id=${value}`).then((res) => {
-      switch (res.data.code) {
+    const { res, error } = await useRequest(
+      `/customerGeneralApi?customer_id=${value}`
+    );
+    if (res.value) {
+      switch ((res.value as resMessage).code) {
         case 200:
           callback(new Error("该身份证号码已存在"));
           break;
-        case 404:
+        case 403:
           callback();
           break;
       }
-    });
+    } else if (error.value) {
+      callback(error.value);
+    }
   }
   callback();
 };
@@ -194,7 +209,6 @@ const TYPES = ["image/jpg", "image/png", "image/jpeg"];
 
 // 修改界面图片预览
 const previewImage = (file: UploadFile) => {
-  console.log(file);
   dialogVisible.value = true;
   dialogImageUrl.value = file.url!;
 };
@@ -209,65 +223,61 @@ const handleExceed: UploadProps["onExceed"] = (files) => {
     const file = files[0] as UploadRawFile;
     upload.value!.handleStart(file);
     updateCustomerPhoto.value.at(0)!.url = URL.createObjectURL(file);
-    updateCustomerPhoto.value.at(0)!.name = `${
-      forms.customer_id
-    }.${file.type.replace("image/", "")}`;
+    avatarType.value = file.type.replace("image/", "");
+    console.log(updateCustomerPhoto.value.at(0));
     isSame.value = false;
   }
 };
 
-const dataUrl = ref("");
+// 上传头像base64编码地址
+const vdataUrl = ref("");
+// 上传头像的类型
+const avatarType = ref("");
 
 // 上传图片进行处理
 const beforeAvatarUpload: UploadProps["beforeUpload"] = async (rawFile) => {
   if (!TYPES.includes(rawFile.type as string)) {
     ElMessage.error("上传头像的格式为,jpg,jpeg,png");
     return false;
-  } else if (rawFile.size / 1024 / 1024 > 2) {
-    await compressAccurately(rawFile, 1000).then((value) => {
-      filetoDataURL(value).then((tDataUrl) => {
-        dataUrl.value = tDataUrl;
-      });
-    });
-    return true;
   } else {
-    await filetoDataURL(rawFile).then((tDataUrl) => {
-      dataUrl.value = tDataUrl;
-    });
+    const { dataUrl } = await useImageCompress(rawFile);
+    vdataUrl.value = dataUrl.value as string;
     return true;
   }
 };
 
 // 上传图片
 const uploadAvatar = async (item: UploadRequestOptions): Promise<unknown> => {
-  return service
-    .post(
-      "/uploadAvatar",
-      JSON.stringify({
-        avatarName: `${updateCustomerPhoto.value.at(0)?.name}`,
-        avatarSize: dataUrl.value.length,
-        avatar: dataUrl.value.replace(/data:image\/\w+;base64,/, ""),
+  if (!isSame.value) {
+    return service
+      .post(
+        "/uploadAvatar",
+        JSON.stringify({
+          avatarName: `${forms.customer_id}.${avatarType.value}`,
+          avatarSize: vdataUrl.value.length,
+          avatar: vdataUrl.value,
+        })
+      )
+      .then((res) => {
+        switch (res.data.code) {
+          case 200:
+            {
+              ElMessage.success("图片上传成功！");
+              reload();
+            }
+            break;
+          case 404:
+            ElMessage.error(res.data.message);
+            break;
+        }
       })
-    )
-    .then((res) => {
-      switch (res.data.code) {
-        case 200:
-          {
-            ElMessage.success("图片上传成功！");
-            reload();
-          }
-          break;
-        case 403:
-          ElMessage.error(res.data.message);
-          break;
-        case 404:
-          ElMessage.error(res.data.message);
-          break;
-      }
-    })
-    .catch((err) => {
-      ElMessage.error(err.config);
-    });
+      .catch((err: AxiosError) => {
+        ElMessage.error(err.message);
+      });
+  } else {
+    reload();
+    return undefined;
+  }
 };
 
 // 点击修改按钮提交请求
@@ -279,17 +289,21 @@ const updateCustomer = () => {
           forms.class_id = ele.class_group;
         }
       });
+      let formData = {
+        customer_id: forms.customer_id,
+        customer_name: forms.customer_name,
+        parent_phone: forms.parent_phone,
+        class_id: forms.class_id,
+        class_name: forms.class_name,
+        customer_photo: `${forms.customer_id}.${avatarType.value}`,
+      };
+      if (isSame.value) {
+        formData.customer_photo = `${props.itemProps.customer_id}`;
+      }
       service
         .put(
           `/customers?customer_id=${props.itemProps.customer_id}`,
-          JSON.stringify({
-            customer_id: forms.customer_id,
-            customer_name: forms.customer_name,
-            parent_phone: forms.parent_phone,
-            class_id: forms.class_id,
-            class_name: forms.class_name,
-            customer_photo: `${updateCustomerPhoto.value.at(0)?.name}`,
-          })
+          JSON.stringify(formData)
         )
         .then((res) => {
           switch (res.data.code) {
@@ -297,7 +311,6 @@ const updateCustomer = () => {
               {
                 upload.value?.submit();
                 ElMessage.success(res.data.message);
-                reload();
               }
               break;
             case 404: {
@@ -306,19 +319,24 @@ const updateCustomer = () => {
           }
         })
         .catch((err) => {
-          ElMessage.error(err.config);
+          ElMessage.error(err.message);
         });
     }
   });
 };
 // 组件加载时请求班级信息
-service.get("classGeneralApi").then((res) => {
-  classes.value = res.data;
-  classes.value.map((ele) => {
-    if (ele.class_name == forms.class_name) {
-      forms.class_id = ele.class_group;
-    }
-  });
+onMounted(async () => {
+  const { res, error } = await useRequest("classGeneralApi");
+  if (res.value) {
+    classes.value = res.value as classType[];
+    classes.value.map((ele) => {
+      if (ele.class_name == forms.class_name) {
+        forms.class_id = ele.class_group;
+      }
+    });
+  } else if (error.value) {
+    ElMessage.error("班级信息获取失败！");
+  }
 });
 </script>
 

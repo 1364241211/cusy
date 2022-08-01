@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import service from "../util/api";
-import { classType, METHOD, resMessage } from "../types";
+import { customer, ListMessage, METHOD, resMessage } from "../types";
 import { AxiosError, AxiosResponse } from "axios";
 
 export async function useRequest(
@@ -8,7 +8,7 @@ export async function useRequest(
   method: METHOD = METHOD.GET,
   data?: string
 ) {
-  const res = ref<resMessage | undefined | null>();
+  const res = ref<resMessage | ListMessage<customer> |undefined | null>();
   const error = ref<string | undefined | null>(null);
   switch (method) {
     case METHOD.GET:

@@ -3,7 +3,7 @@ import cookies from "../cookies/index";
 
 let csrf_token: string = cookies.cookies.get("csrftoken");
 const service = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_APP_BASE_API + "/api",
   timeout: 60000,
   withCredentials: true,
   headers: {
