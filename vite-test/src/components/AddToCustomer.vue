@@ -81,13 +81,7 @@
 <script lang="ts" setup>
 import { reactive, ref, inject, onMounted } from "vue";
 import zhCn from "element-plus/lib/locale/lang/zh-cn";
-import {
-  ElForm,
-  ElMessage,
-  FormItemRule,
-  UploadFile,
-  UploadUserFile,
-} from "element-plus";
+import { ElForm, ElMessage, UploadFile, UploadUserFile } from "element-plus";
 import type {
   UploadRawFile,
   UploadProps,
@@ -154,9 +148,15 @@ const vaildName = (rule: any, value: any, callback: any) => {
     callback();
   }
 };
-const vaildId = async (rule: any, value: any, callback: any): Promise<void> => {
+const vaildId: (rule: any, value: any, callback: any) => void = async (
+  rule: any,
+  value: any,
+  callback: any
+) => {
   value = forms.customer_id;
-  if (value === "") {
+  if (value == props.itemProps.customer_id) {
+    callback();
+  } else if (value === "") {
     callback(new Error("请输入身份号码！"));
   } else if (!checkID(value)) {
     callback(new Error("身份证验证未通过，请检查!"));
@@ -178,6 +178,7 @@ const vaildId = async (rule: any, value: any, callback: any): Promise<void> => {
     }
   }
   callback();
+  return;
 };
 const vaildphone = (rule: any, value: any, callback: any) => {
   value = forms.parent_phone;

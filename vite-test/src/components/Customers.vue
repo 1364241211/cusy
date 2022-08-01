@@ -213,10 +213,12 @@ const calssFiltersMethod = (
   console.log(column);
   return row[property as keyof customer] === value;
 };
+
 // 重制班级过滤
 const restClassFilter = () => {
   tableInstance.value?.clearFilter(["class_name"]);
 };
+
 // 设置通过传递的response设置表格数据tableData
 const set_tableData = (res: ListMessage<customer>) => {
   pagnation.count = res.count as number;
@@ -229,6 +231,7 @@ const set_tableData = (res: ListMessage<customer>) => {
     );
   });
 };
+
 // 获取选择的表格数据
 const columnSelect = () => {
   if (tableInstance.value?.getSelectionRows().length !== 0) {
@@ -238,6 +241,7 @@ const columnSelect = () => {
     buttonEnable.value = true;
   }
 };
+
 // 为按钮组添加点击事件
 // status :1 通过
 // status :2 驳回

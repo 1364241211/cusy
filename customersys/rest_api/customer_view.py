@@ -48,8 +48,14 @@ class customerApiViewSet(ModelViewSet):
 
     def retrieve(self, request, param, *args, **kwargs):
         try:
-            self.queryset = self.get_queryset().filter(Q(customer_id__icontains=param) | Q(
-                customer_name__icontains=param) | Q(parent_phone__icontains=param))
+            if "ex_is_valided" in request.GET:
+                ex_is_valided = request.GET.get("ex_is_valided")
+                self.queryset = Customers.objects.all().exclude(is_valided=ex_is_valided).filter(
+                    Q(customer_id__icontains=param) | Q(
+                        customer_name__icontains=param) | Q(parent_phone__icontains=param))
+            else:
+                self.queryset = self.get_queryset().filter(Q(customer_id__icontains=param) | Q(
+                    customer_name__icontains=param) | Q(parent_phone__icontains=param))
         except Exception as e:
             return Response(message('failed', 404, e.args[0]), status=200)
         return super(customerApiViewSet, self).list(request)

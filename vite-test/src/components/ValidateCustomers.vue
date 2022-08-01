@@ -58,7 +58,9 @@
             style="display: flex; align-items: center; justify-content: center"
           >
             <el-image
-              :src="'/static/avatar/' + scope.row.customer_photo"
+              :src="
+                'http://192.168.2.103/static/avatar/' + scope.row.customer_photo
+              "
               style="height: 100px; width: 80px"
               fit="cover"
               :lazy="true"
@@ -126,15 +128,22 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch, inject } from "vue";
+import { ref, reactive, inject, onMounted } from "vue";
 import { ElMessage, ElTable } from "element-plus";
-import { AxiosResponse } from "axios";
 import type { TableColumnCtx } from "element-plus/es/components/table/src/table-column/defaults";
 import zhCn from "element-plus/lib/locale/lang/zh-cn";
 
 import { Search, CircleClose, Finished } from "@element-plus/icons";
 
-import { customer, pagnationData, classType } from "../types/index";
+import {
+  customer,
+  pagnationData,
+  classType,
+  ListMessage,
+  resMessage,
+  METHOD,
+} from "../types/index";
+import { useRequest } from "../hooks/useReqest";
 import service from "../util/api";
 
 const locale = zhCn;
@@ -162,6 +171,7 @@ const tableData = ref<Array<customer>>();
 const tableInstance = ref<InstanceType<typeof ElTable>>();
 const buttonEnable = ref(true);
 const selectionRows = ref(0);
+
 // 状态过滤方法
 const statusFiltersMethod = (
   value: string,
@@ -171,6 +181,7 @@ const statusFiltersMethod = (
   const property = column["property"] as string;
   return row[property as keyof customer] == value;
 };
+
 //班级过滤方法
 const classFiltersMethod = (
   value: string,
@@ -185,16 +196,20 @@ const classFiltersMethod = (
 const restClassFilter = () => {
   tableInstance.value?.clearFilter(["class_name"]);
 };
+
 // 设置通过传递的response设置表格数据tableData
-const set_tableData = (res: AxiosResponse) => {
-  pagnation.count = res.data.count;
-  pagnation.next = res.data.next;
-  pagnation.previous = res.data.previous;
-  tableData.value = res.data.results;
-  tableData.value!.forEach((ele) => {
-    pre_src_list.value.push(ele.customer_photo);
+const set_tableData = (res: ListMessage<customer>) => {
+  pagnation.count = res.count as number;
+  pagnation.next = res.next as string;
+  pagnation.previous = res.previous as string;
+  tableData.value = res.results;
+  tableData.value!.forEach((ele: customer) => {
+    pre_src_list.value.push(
+      `${import.meta.env.VITE_APP_STATIC_URL}/avatar/${ele.customer_photo}`
+    );
   });
 };
+
 const columnSelect = () => {
   if (tableInstance.value?.getSelectionRows().length !== 0) {
     buttonEnable.value = false;
@@ -203,74 +218,66 @@ const columnSelect = () => {
     buttonEnable.value = true;
   }
 };
+
 // 获取父级组件的reload方法
 const reload = inject("reload", Function, true);
 
 // 为按钮组添加点击事件
 // status :1 通过
 // status :2 驳回
-const moderateUsers = (status: number) => {
+const moderateUsers = async (status: number) => {
   changeLoading();
-  service
-    .post(
-      `/validateCustomers?status=${status}`,
-      JSON.stringify({
-        idList: tableInstance.value
-          ?.getSelectionRows()
-          .map((item: customer) => {
-            return item.id;
-          }),
-      })
-    )
-    .then((res) => {
-      ElMessage.success({ message: res.data.message });
-      reload();
-      changeLoading();
+  const { res, error } = await useRequest(
+    `/validateCustomers?status=${status}`,
+    METHOD.POST,
+    JSON.stringify({
+      idList: tableInstance.value?.getSelectionRows().map((item: customer) => {
+        return item.id;
+      }),
     })
-    .catch((err) => {
-      ElMessage.error({ message: err });
-      changeLoading();
-    });
+  );
+  if (res.value) {
+    ElMessage.success({ message: (res.value as resMessage).message });
+    reload();
+    changeLoading();
+  } else if (error.value) {
+    changeLoading();
+  }
 };
 //搜索框中的值
 const search = ref<string>();
 
 // 搜索框清空时触发事件
-const clearSearch = () => {
+const clearSearch = async () => {
   changeLoading();
-  service
-    .get("/customers")
-    .then((res) => {
-      set_tableData(res);
-      changeLoading();
-    })
-    .catch((err) => {
-      changeLoading();
-      ElMessage.error(err.code);
-    });
+  const { res, error } = await useRequest(
+    "/customers?ex_is_valided=1",
+    METHOD.GET
+  );
+  if (res.value) {
+    set_tableData(res.value as ListMessage<customer>);
+    changeLoading();
+  } else if (error.value) {
+    changeLoading();
+    ElMessage.error(error.value);
+  }
 };
 
 // 通过模糊查询用户
-const searchCustomer = () => {
+const searchCustomer = async () => {
   if (search.value !== "") {
     changeLoading();
-    service
-      .get(`/customer/${search.value}`)
-      .then((res: AxiosResponse) => {
-        switch (res.data.code) {
-          // case 404: tableData.value = new Array<customer>
-          case undefined:
-            set_tableData(res);
-        }
-        changeLoading();
-      })
-      .catch((err) => {
-        // console.log(err.data);
-        changeLoading();
-        // ElMessage.error(err.data)
-      });
+    const { res, error } = await useRequest(
+      `/customer/${search.value}?ex_is_valided=1`
+    );
+    if (res.value) {
+      set_tableData(res.value as ListMessage<customer>);
+      changeLoading();
+    } else if (error.value) {
+      changeLoading();
+    }
   } else {
-    clearSearch();
+    await clearSearch();
   }
 };
 
@@ -287,56 +294,55 @@ const pageSizeList = ref<Array<number>>([30, 50, 100]);
 const currentPage = ref<number>();
 
 // 监听当前页面页码，发生改变时滚动到表格最上方
-watch(currentPage, (newValue, oldValue) => {
-  // window.scrollTo(0, 0)
-  tableInstance.value?.scrollTo(0, 0);
-});
+//watch(currentPage, (newValue, oldValue) => {
+// window.scrollTo(0, 0)
+// tableInstance.value?.scrollTo(0, 0);
+//});
 
 // 当前页数发生改变时触发事件
-const sizeChange = () => {
+const sizeChange = async () => {
   changeLoading();
-  service
-    .get(`/customers?pageSize=${pageSize.value}&is_valided=0`)
-    .then((res: AxiosResponse) => {
-      changeLoading();
-      set_tableData(res);
-    })
-    .catch((err) => {
-      changeLoading();
-    });
+  const { res, error } = await useRequest(
+    `/customers?pageSize=${pageSize.value}&ex_is_valided=1`
+  );
+  if (res.value) {
+    changeLoading();
+    set_tableData(res.value as ListMessage<customer>);
+  } else if (error.value) {
+    changeLoading();
+  }
 };
 // 当前页面页码改变时触发事件
-const jumpPage = () => {
+const jumpPage = async () => {
   changeLoading();
-  service
-    .get(
-      `/customers?page=${currentPage.value}&pageSize=${pageSize.value}&is_valided=0`
-    )
-    .then((res) => {
-      changeLoading();
-      set_tableData(res);
-    })
-    .catch((err) => {
-      changeLoading();
-      ElMessage.error(err.code);
-    });
+  const { res, error } = await useRequest(
+    `/customers?page=${currentPage.value}&pageSize=${pageSize.value}&ex_is_valided=1`
+  );
+  if (res.value) {
+    changeLoading();
+    set_tableData(res.value as ListMessage<customer>);
+  } else if (error.value) {
+    changeLoading();
+    ElMessage.error(error.value);
+  }
 };
-// 刷新页面时请求一次数据
-service
-  .get("/customers?ex_is_valided=1")
-  .then((res) => {
-    set_tableData(res);
-  })
-  .catch((err) => {
-    ElMessage.error(err.code);
-  });
 
-service.get("/classGeneralApi").then((res) => {
-  classFilters.value = res.data.map((ele: classType) => {
-    return {
-      text: ele.class_name,
-      value: ele.class_name,
-    };
+// 刷新页面时请求一次数据
+onMounted(async () => {
+  const { res, error } = await useRequest("/customers?ex_is_valided=1");
+  if (res.value) {
+    set_tableData(res.value as ListMessage<customer>);
+  } else if (error.value) {
+    ElMessage.error(error.value);
+  }
+
+  service.get("/classGeneralApi").then((res) => {
+    classFilters.value = res.data.map((ele: classType) => {
+      return {
+        text: ele.class_name,
+        value: ele.class_name,
+      };
+    });
   });
 });
 </script>

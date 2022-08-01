@@ -4,6 +4,7 @@ import { ref, onMounted } from "vue";
 import { useRequest } from "../hooks/useReqest";
 import { Notify } from "vant";
 import MdEditor from "md-editor-v3";
+import { resMessage } from "../types";
 
 const text = ref<string>();
 
@@ -11,7 +12,9 @@ const text = ref<string>();
 onMounted(async () => {
   const { res, error } = await useRequest("/mdGeneralApi");
   if (res.value) {
-    text.value = (res.value.info as string) ? (res.value.info as string) : "";
+    text.value = ((res.value as resMessage).info as string)
+      ? ((res.value as resMessage).info as string)
+      : "";
   } else if (error.value) {
     Notify({ type: "danger", message: error.value });
   }
@@ -31,7 +34,7 @@ onMounted(async () => {
 <style lang="scss" scoped>
 /* code... */
 .md-preview-div {
-  width:88vw;
+  width: 88vw;
   height: 86vh;
 }
 :deep(img) {

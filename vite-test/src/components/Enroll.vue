@@ -189,7 +189,7 @@ import PreviewMdVue from "./PreviewMd.vue";
 import router from "../router";
 import checkID from "../util/RegexVaild";
 import service from "../util/api";
-import type { classType } from "../types";
+import type { classType, resMessage } from "../types";
 import { useRequest } from "../hooks/useReqest";
 import { METHOD } from "../types";
 import { useImageCompress } from "../hooks/useImageCompress";
@@ -311,14 +311,13 @@ const subPost = async () => {
       parent_phone: form.par_phone,
       class_id: form.class_id,
       class_name: form.class_name,
-      customer_photo: `${form.customer_id}.${fileInput.value?.type.replace(
-        "image/",
-        ""
-      )}`,
+      customer_photo: `${form.customer_id}.${fileInput.value?.files
+        ?.item(0)
+        ?.type.replace("image/", "")}`,
     })
   );
   if (res.value) {
-    switch (res.value.code) {
+    switch ((res.value as resMessage).code) {
       case 200:
         {
           // 上传用户信息成功时，上传用户头像
@@ -397,7 +396,7 @@ const uploadImage = async () => {
     })
   );
   if (res.value) {
-    switch (res.value.code) {
+    switch ((res.value as resMessage).code) {
       case 200:
     }
   } else if (error.value) {

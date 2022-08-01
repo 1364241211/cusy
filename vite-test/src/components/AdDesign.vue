@@ -34,7 +34,7 @@ import MdEditor, { ToolbarNames } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 import { useRequest } from "../hooks/useReqest";
 import { useImageCompress } from "../hooks/useImageCompress";
-import { METHOD } from "../types";
+import { METHOD, resMessage } from "../types";
 import { ElMessage } from "element-plus";
 const NormalToolbar = MdEditor.NormalToolbar;
 const toolbars = [
@@ -89,7 +89,7 @@ const saveMd = async (value: string) => {
       })
     );
     if (res.value) {
-      ElMessage.success(res.value.message);
+      ElMessage.success((res.value as resMessage).message);
     } else if (error.value) {
       ElMessage.error(error.value);
     }
@@ -122,7 +122,7 @@ const handUploadImg = async (
   }
   if (res.value) {
     console.log(res.value);
-    callback([`/static${res.value.info as string}`]);
+    callback([`/static${(res.value as resMessage).info as string}`]);
   }
 };
 
@@ -153,7 +153,7 @@ const handleVideo = async () => {
         text.value =
           text.value +
           `<video controls preload='autoplay' name="media" width="100%" height="300">\r\n\t<source src='${
-            "/static" + res.value?.info
+            "/static" + (res.value as resMessage)?.info
           }' type="video/mp4">\r\n</video>\r\n`;
       } else if (error.value) {
         ElMessage.error(error.value);
@@ -168,7 +168,7 @@ const handleVideo = async () => {
 onMounted(async () => {
   const { res, error } = await useRequest("/uploadMd", METHOD.GET);
   if (res.value) {
-    text.value = res.value.info as string;
+    text.value = (res.value as resMessage).info as string;
   } else if (error.value) {
     ElMessage.error(error.value);
   }
