@@ -311,9 +311,10 @@ const subPost = async () => {
       parent_phone: form.par_phone,
       class_id: form.class_id,
       class_name: form.class_name,
-      customer_photo: `${form.customer_id}.${fileInput.value?.files
-        ?.item(0)
-        ?.type.replace("image/", "")}`,
+      customer_photo: `${form.customer_id}.${fileInput.value?.files?.item(0)?.type.replace(
+        "image/",
+        ""
+      )}`,
     })
   );
   if (res.value) {
@@ -382,8 +383,8 @@ const submitForm = () => {
     });
 };
 
-// 上传头像到服务器
 const uploadImage = async () => {
+const uploadImage = async (): Promise<void> => {
   const file = fileInput.value?.files?.item(0);
   const { dataUrl, size } = await useImageCompress(file as Blob);
   const { res, error } = await useRequest(

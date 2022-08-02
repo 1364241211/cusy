@@ -216,7 +216,6 @@ const previewImage = (file: UploadFile) => {
 
 // 当用户重新点击时图片时进行处理
 const handleExceed: UploadProps["onExceed"] = (files) => {
-  let dataType = "";
   if (!TYPES.includes(files.at(0)?.type as string)) {
     ElMessage.error("上传头像的格式为,jpg,jpeg,png");
   } else {
@@ -277,7 +276,6 @@ const uploadAvatar = async (item: UploadRequestOptions): Promise<unknown> => {
       });
   } else {
     reload();
-    return undefined;
   }
 };
 
@@ -301,7 +299,7 @@ const updateCustomer = () => {
       if (isSame.value) {
         formData.customer_photo = `${props.itemProps.customer_id}`;
       }
-      service
+      const UpdateInfo = service
         .put(
           `/customers?customer_id=${props.itemProps.customer_id}`,
           JSON.stringify(formData)
@@ -310,7 +308,7 @@ const updateCustomer = () => {
           switch (res.data.code) {
             case 200:
               {
-                upload.value?.submit();
+                // upload.value?.submit();
                 ElMessage.success(res.data.message);
               }
               break;
@@ -321,6 +319,14 @@ const updateCustomer = () => {
         })
         .catch((err) => {
           ElMessage.error(err.message);
+        });
+      const uploadImage = upload.value?.submit();
+      Promise.all([UpdateInfo, uploadImage])
+        .then((values) => {
+          ElMessage.success("用户信息更新成功!");
+        })
+        .catch((err) => {
+          ElMessage.error(err.value);
         });
     }
   });
