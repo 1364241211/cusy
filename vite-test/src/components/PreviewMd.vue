@@ -23,11 +23,7 @@ onMounted(async () => {
 
 <template>
   <div class="md-preview-div">
-    <md-editor
-      v-model="text"
-      :preview-only="true"
-      :html-preview="true"
-    ></md-editor>
+    <md-editor v-model="text" :preview-only="true"></md-editor>
   </div>
 </template>
 
@@ -36,6 +32,10 @@ onMounted(async () => {
 .md-preview-div {
   width: 88vw;
   height: 86vh;
+  overflow-y: scroll;
+}
+:deep(.md-previewOnly) {
+  height: 100%;
 }
 :deep(img) {
   width: 100%;

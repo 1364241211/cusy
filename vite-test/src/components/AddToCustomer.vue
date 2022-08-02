@@ -35,11 +35,6 @@
             class="avatar-uploader"
           >
             <el-icon><Plus /></el-icon>
-            <!---<img
-              class="avatar"
-              :src="updateCustomerPhoto.at(0)?.url"
-              style="width: 80px; height: 100px"
-            />-->
           </el-upload>
         </el-form-item>
         <el-form-item label="学生班级">
@@ -132,9 +127,9 @@ const forms = reactive({
 const updateCustomerPhoto = ref<UploadUserFile[]>([
   {
     name: props.itemProps.customer_photo,
-    url: `${import.meta.env.VITE_APP_STATIC_URL}/avatar/${
+    url: `${import.meta.env.VITE_APP_STATIC_URL}/static/avatar/${
       props.itemProps.customer_photo
-    }`,
+    }`.trim(),
   },
 ]);
 

@@ -58,7 +58,7 @@
           <van-picker
             title="学生批次"
             :columns="
-              classes.map((ele) => {
+              classes.map((ele:any) => {
                 return ele.class_name;
               })
             "
@@ -311,10 +311,9 @@ const subPost = async () => {
       parent_phone: form.par_phone,
       class_id: form.class_id,
       class_name: form.class_name,
-      customer_photo: `${form.customer_id}.${fileInput.value?.files?.item(0)?.type.replace(
-        "image/",
-        ""
-      )}`,
+      customer_photo: `${form.customer_id}.${fileInput.value?.files
+        ?.item(0)
+        ?.type.replace("image/", "")}`,
     })
   );
   if (res.value) {
@@ -383,7 +382,6 @@ const submitForm = () => {
     });
 };
 
-const uploadImage = async () => {
 const uploadImage = async (): Promise<void> => {
   const file = fileInput.value?.files?.item(0);
   const { dataUrl, size } = await useImageCompress(file as Blob);
@@ -414,7 +412,7 @@ onMounted(() => {
   dialogShow.value = true;
   setTimeout(() => {
     dialogCancelBtn.value = true;
-  }, 100);
+  }, 5000);
 });
 </script>
 <style lang="scss" scoped>

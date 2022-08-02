@@ -58,9 +58,7 @@
             style="display: flex; align-items: center; justify-content: center"
           >
             <el-image
-              :src="
-                'http://192.168.2.103/static/avatar/' + scope.row.customer_photo
-              "
+              :src="'/static/avatar/' + scope.row.customer_photo"
               style="height: 100px; width: 80px"
               fit="cover"
               :lazy="true"
@@ -203,9 +201,13 @@ const set_tableData = (res: ListMessage<customer>) => {
   pagnation.next = res.next as string;
   pagnation.previous = res.previous as string;
   tableData.value = res.results;
+  // 清空预览图片列表中的元素
+  pre_src_list.value.length = 0;
   tableData.value!.forEach((ele: customer) => {
     pre_src_list.value.push(
-      `${import.meta.env.VITE_APP_STATIC_URL}/avatar/${ele.customer_photo}`
+      `${import.meta.env.VITE_APP_STATIC_URL}/static/avatar/${
+        ele.customer_photo
+      }`.trim()
     );
   });
 };
