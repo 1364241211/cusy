@@ -10,6 +10,22 @@
             @click="moderateUsers(2)"
             >驳回 ({{ buttonEnable ? 0 : selectionRows }})</el-button
           >
+          <el-tooltip
+            content="点击后导出<strong style='color:red'><i>当前页面<i></strong>的数据"
+            raw-content
+          >
+            <el-button type="primary" :icon="Document" @click="exportPage"
+              >单页导出
+            </el-button></el-tooltip
+          >
+          <el-tooltip
+            content="点击后导出<strong style='color:red'><i>所有页面<i></strong>的数据"
+            raw-content
+          >
+            <el-button type="primary" :icon="Files" @click="exportAll"
+              >全部导出
+            </el-button></el-tooltip
+          >
         </el-button-group>
         <el-input
           v-model="search"
@@ -155,7 +171,14 @@ import { ElMessage, ElMessageBox, ElTable } from "element-plus";
 import type { TableColumnCtx } from "element-plus/es/components/table/src/table-column/defaults";
 import zhCn from "element-plus/lib/locale/lang/zh-cn";
 
-import { Delete, Edit, Search, CircleClose } from "@element-plus/icons";
+import {
+  Delete,
+  Edit,
+  Search,
+  CircleClose,
+  Files,
+  Document,
+} from "@element-plus/icons";
 
 import {
   classType,
@@ -388,6 +411,54 @@ const updateCustomer = (index: number) => {
   item_Props["data"] = columnData as customer;
   drawer.value = !drawer.value;
   isAlive.value = true;
+};
+
+// 导出单页数据
+const exportPage = async () => {
+  let cPage = 1;
+  if (currentPage.value) {
+    cPage = currentPage.value;
+  }
+  const { res, error } = await useRequest(
+    `/exportAll?page=${cPage}&pageSize=${pageSize.value}`,
+    METHOD.GET,
+    undefined,
+    true
+  );
+  if (res.value) {
+    const bl = new Blob([res.value as Blob], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const a = document.createElement("a");
+    a.href = window.URL.createObjectURL(bl);
+    a.download = "customers.xlsx";
+    a.click();
+    window.URL.revokeObjectURL(a.href);
+  } else if (error.value) {
+    ElMessage.error("导出失败");
+  }
+};
+
+// 将数据全部导出为excel
+const exportAll = async () => {
+  const { res, error } = await useRequest(
+    "/exportAll",
+    METHOD.POST,
+    undefined,
+    true
+  );
+  if (res.value) {
+    const bl = new Blob([res.value as Blob], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const a = document.createElement("a");
+    a.href = window.URL.createObjectURL(bl);
+    a.download = "customers(全).xlsx";
+    a.click();
+    window.URL.revokeObjectURL(a.href);
+  } else if (error.value) {
+    ElMessage.error("导出失败");
+  }
 };
 
 // 刷新页面时请求一次数据

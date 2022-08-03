@@ -6,14 +6,18 @@ import { AxiosError, AxiosResponse } from "axios";
 export async function useRequest(
   url: string,
   method: METHOD = METHOD.GET,
-  data?: string
+  data?: string,
+  BlobFile?: boolean
 ) {
-  const res = ref<resMessage | ListMessage<customer> |undefined | null>();
+  const res = ref<
+    resMessage | ListMessage<customer> | Blob | undefined | null
+  >();
   const error = ref<string | undefined | null>(null);
+  const resType = BlobFile ? "blob" : "json";
   switch (method) {
     case METHOD.GET:
       await service
-        .get(url)
+        .get(url, { responseType: resType })
         .then((resp: AxiosResponse) => {
           res.value = resp.data;
         })
@@ -23,7 +27,7 @@ export async function useRequest(
       break;
     case METHOD.POST:
       await service
-        .post(url, data)
+        .post(url, data, { responseType: resType })
         .then((resp: AxiosResponse) => {
           res.value = resp.data;
         })
@@ -33,7 +37,7 @@ export async function useRequest(
       break;
     case METHOD.DELETE:
       await service
-        .post(url, data)
+        .post(url, data, { responseType: resType })
         .then((resp: AxiosResponse) => {
           res.value = resp.data;
         })
@@ -43,7 +47,7 @@ export async function useRequest(
       break;
     case METHOD.UPDATE:
       await service
-        .post(url, data)
+        .post(url, data, { responseType: resType })
         .then((resp: AxiosResponse) => {
           res.value = resp.data;
         })

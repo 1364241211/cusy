@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_api',
+    # 导入导出App
+    'import_export'
 ]
 APPEND_SLASH = False
 REST_FRAMEWORK = {
@@ -186,6 +188,7 @@ CORS_ALLOW_HEADERS = (
     'Pragma',
     'csrf_token',
     'x-request-with',
+    'responseType'
 )
 
 # 跨域请求时，是否运行携带cookie，默认为False

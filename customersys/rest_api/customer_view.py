@@ -1,6 +1,7 @@
 import time
 
 from django.db.models import Q
+from django.http.response import HttpResponse
 from django.middleware.csrf import get_token
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,6 +13,7 @@ from .base64Tobyte import base64ToImage
 from .message import message
 from .models import Customers, Class
 from .pagination import customersPagination
+from .resources import customersResources
 from .serializer import (customerSerializer, customerTokenObtainSerializer, classSerializer, mdResSerializer)
 
 
@@ -274,6 +276,32 @@ class mdGeneralApi(APIView):
     def get(self, request):
         info = base64ToImage("1", "1", "1").readMd()
         return Response(message("success", 200, "请求成功", kwargs={"info": info}))
+
+
+class exportResources(APIView):
+    authentication_classes = [isLoginJWTAuthentication]
+
+    def get(self, request):
+        if ("page" or "pageSize") not in request.GET:
+            return Response(message("failed", 404, "请求参数不全，请检查"))
+        try:
+            page = int(request.GET.get("page"))
+            pageSize = int(request.GET.get("pageSize"))
+            querySet = Customers.objects.filter(is_valided=1)[(page - 1) * pageSize:page * pageSize]
+            data = customersResources().export(queryset=querySet)
+            response = HttpResponse(data.xlsx,
+                                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response["Content-Disposition"] = "attachment;filename=\"customers({}).xls\"".format(page)
+            return response
+        except Exception as e:
+            return Response(message("failed", 403, "参数不合法", kwargs={"info": e.args[0]}))
+
+    def post(self, request):
+        data = customersResources().export()
+        response = HttpResponse(data.xlsx,
+                                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        response["Content-Disposition"] = "attachment;filename=\"customers.xlsx\""
+        return response
 
 
 class customerTokenObtainView(TokenObtainPairView):

@@ -34,6 +34,7 @@ declare module '@vue/runtime-core' {
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTag: typeof import('element-plus/es')['ElTag']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     Enroll: typeof import('./src/components/Enroll.vue')['default']
     EnrollSearch: typeof import('./src/components/EnrollSearch.vue')['default']

@@ -13,6 +13,7 @@ from .customer_view import (customerGeneralApi,
                             uploadMdRes,
                             mdGeneralApi,
                             saveMd,
+                            exportResources,
                             classGeneralApi,
                             classViewSet)
 
@@ -47,6 +48,7 @@ urlpatterns = [
     path('uploadMdRes', uploadMdRes.as_view(), name='res'),
     path('uploadMd', saveMd.as_view(), name="md"),
     path('mdGeneralApi', mdGeneralApi.as_view()),
+    path('exportAll', exportResources.as_view()),
     path('validateCustomers', validate_Customer),
     path('customer/<str:param>', customer_detail, name='customer-detail'),
     path('customers', customers, name='customers'),
