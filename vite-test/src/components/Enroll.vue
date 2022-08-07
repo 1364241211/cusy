@@ -161,9 +161,9 @@
         </div>
         <div class="button-group">
           <van-button type="success" @click="enterUpdateCus">是</van-button>
-          <van-button type="danger" @click="router.push({ name: 'success' })"
-            >否
-          </van-button>
+          <van-button type="danger" @click="router.push({ name: 'index' })"
+            >否</van-button
+          >
         </div>
       </div>
     </van-popup>
