@@ -11,19 +11,53 @@
             >驳回 ({{ buttonEnable ? 0 : selectionRows }})</el-button
           >
           <el-tooltip
-            content="点击后导出<strong style='color:red'><i>当前页面<i></strong>的数据"
+            content="点击后<strong style='color:red'><i>使用新生导入模版<i></strong>导出<strong style='color:red'><i>当前页面<i></strong>的数据"
             raw-content
           >
-            <el-button type="primary" :icon="Document" @click="exportPage"
-              >单页导出
+            <el-button
+              type="primary"
+              :icon="Document"
+              @click="exportPage"
+              class="button-transion"
+              >单页导出(新生导入模版)
             </el-button></el-tooltip
           >
           <el-tooltip
-            content="点击后导出<strong style='color:red'><i>所有页面<i></strong>的数据"
+            content="点击后<strong style='color:red'><i>使用新生导入模版<i></strong>导出<strong style='color:red'><i>所有页面<i></strong>的数据"
             raw-content
           >
-            <el-button type="primary" :icon="Files" @click="exportAll"
-              >全部导出
+            <el-button
+              type="primary"
+              :icon="Files"
+              @click="exportAll"
+              class="button-transion"
+              >全部导出(新生导入模版)
+            </el-button></el-tooltip
+          >
+          <el-tooltip
+            content="点击后<strong style='color:red'><i>使用人脸识别模版<i></strong>导出<strong style='color:red'><i>当前页面<i></strong>的数据"
+            raw-content
+          >
+            <el-button
+              type="success"
+              color="#626aef"
+              :icon="Document"
+              @click="exportMTPage"
+              class="button-transion"
+              >单页导出(人脸识别模版)
+            </el-button></el-tooltip
+          >
+          <el-tooltip
+            content="点击后<strong style='color:red'><i>使用人脸识别模版<i></strong>导出<strong style='color:red'><i>所有页面<i></strong>的数据"
+            raw-content
+          >
+            <el-button
+              type="success"
+              color="#626aef"
+              :icon="Files"
+              @click="exportMTAll"
+              class="button-transion"
+              >全部导出(人脸识别模版)
             </el-button></el-tooltip
           >
         </el-button-group>
@@ -431,7 +465,7 @@ const exportPage = async () => {
     });
     const a = document.createElement("a");
     a.href = window.URL.createObjectURL(bl);
-    a.download = "customers.xlsx";
+    a.download = `新生导入模版(${cPage}).xlsx`;
     a.click();
     window.URL.revokeObjectURL(a.href);
   } else if (error.value) {
@@ -453,7 +487,7 @@ const exportAll = async () => {
     });
     const a = document.createElement("a");
     a.href = window.URL.createObjectURL(bl);
-    a.download = "customers(全).xlsx";
+    a.download = "新生导入模版(全).xlsx";
     a.click();
     window.URL.revokeObjectURL(a.href);
   } else if (error.value) {
@@ -461,6 +495,53 @@ const exportAll = async () => {
   }
 };
 
+// 导出人脸识别模版单页数据
+const exportMTPage = async () => {
+  let cPage = 1;
+  if (currentPage.value) {
+    cPage = currentPage.value;
+  }
+  const { res, error } = await useRequest(
+    `/exportMTAll?page=${cPage}&pageSize=${pageSize.value}`,
+    METHOD.GET,
+    undefined,
+    true
+  );
+  if (res.value) {
+    const bl = new Blob([res.value as Blob], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const a = document.createElement("a");
+    a.href = window.URL.createObjectURL(bl);
+    a.download = `人脸识别模版(${cPage}).xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(a.href);
+  } else if (error.value) {
+    ElMessage.error("导出失败");
+  }
+};
+
+// 将人脸识别模版数据全部导出为excel
+const exportMTAll = async () => {
+  const { res, error } = await useRequest(
+    "/exportMTAll",
+    METHOD.POST,
+    undefined,
+    true
+  );
+  if (res.value) {
+    const bl = new Blob([res.value as Blob], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const a = document.createElement("a");
+    a.href = window.URL.createObjectURL(bl);
+    a.download = "人脸识别模版(全).xlsx";
+    a.click();
+    window.URL.revokeObjectURL(a.href);
+  } else if (error.value) {
+    ElMessage.error("导出失败");
+  }
+};
 // 刷新页面时请求一次数据
 onMounted(async () => {
   const { res, error } = await useRequest("/customers");
@@ -507,6 +588,17 @@ onMounted(async () => {
   justify-content: space-evenly;
   .el-button + .el-button {
     margin: 0;
+  }
+}
+.button-transion {
+  :deep(span) {
+    display: none;
+  }
+}
+.button-transion:hover {
+  overflow: hidden;
+  :deep(span) {
+    display: inline-block;
   }
 }
 </style>
