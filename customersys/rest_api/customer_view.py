@@ -13,7 +13,7 @@ from .base64Tobyte import base64ToImage
 from .message import message
 from .models import Customers, Class
 from .pagination import customersPagination
-from .resources import customersResources
+from .resources import customersResources, customersMTResources
 from .serializer import (customerSerializer, customerTokenObtainSerializer, classSerializer, mdResSerializer)
 
 
@@ -279,6 +279,9 @@ class mdGeneralApi(APIView):
 
 
 class exportResources(APIView):
+    """
+    导出模版数据1
+    """
     authentication_classes = [isLoginJWTAuthentication]
 
     def get(self, request):
@@ -288,8 +291,8 @@ class exportResources(APIView):
             page = int(request.GET.get("page"))
             pageSize = int(request.GET.get("pageSize"))
             querySet = Customers.objects.filter(is_valided=1)[(page - 1) * pageSize:page * pageSize]
-            data = customersResources().export(queryset=querySet)
-            response = HttpResponse(data.xlsx,
+            customersData = customersResources().export(queryset=querySet)
+            response = HttpResponse(customersData.xlsx,
                                     content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             response["Content-Disposition"] = "attachment;filename=\"customers({}).xls\"".format(page)
             return response
@@ -299,6 +302,35 @@ class exportResources(APIView):
     def post(self, request):
         data = customersResources().export()
         response = HttpResponse(data.xlsx,
+                                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        response["Content-Disposition"] = "attachment;filename=\"customers.xlsx\""
+        return response
+
+
+class exportMTResources(APIView):
+    """
+    导出模版数据2
+    """
+    authentication_classes = [isLoginJWTAuthentication]
+
+    def get(self, request):
+        if ("page" or "pageSize") not in request.GET:
+            return Response(message("failed", 404, "请求参数不全，请检查"))
+        try:
+            page = int(request.GET.get("page"))
+            pageSize = int(request.GET.get("pageSize"))
+            querySet = Customers.objects.filter(is_valided=1)[(page - 1) * pageSize:page * pageSize]
+            customersData = customersMTResources().export(queryset=querySet)
+            response = HttpResponse(customersData.xlsx,
+                                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response["Content-Disposition"] = "attachment;filename=\"customers({}).xls\"".format(page)
+            return response
+        except Exception as e:
+            return Response(message("failed", 403, "参数不合法", kwargs={"info": e.args[0]}))
+
+    def post(self, request):
+        customersMTData = customersMTResources().export()
+        response = HttpResponse(customersMTData.xlsx,
                                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         response["Content-Disposition"] = "attachment;filename=\"customers.xlsx\""
         return response
