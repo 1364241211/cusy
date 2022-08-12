@@ -11,7 +11,7 @@ class customersResources(resources.ModelResource):
     customer_grant_type = Field(column_name="补助类型（0～29）")
     customer_section_one = Field(column_name="一级部门")
     customer_section_two = Field(column_name="二级部门")
-    customer_section_three = Field(column_name="三级级部门")
+    customer_section_three = Field(column_name="三级部门")
     customer_section_four = Field(column_name="四级部门")
     customer_id_id = Field(attribute="customer_id", column_name="证件号")
     customer_type = Field(column_name="客户身份")
