@@ -3,8 +3,9 @@ customersys/*.ini
 customersys/*.log
 customersys/*.pid
 customersys/statics/
+!customersys/statics/captchaImage
+customersys/.idea
 vite-test/node_modules/
 .vim
-.idea
 vite-test/dist/
 .DS_Store
