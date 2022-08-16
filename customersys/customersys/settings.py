@@ -146,7 +146,6 @@ TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
 
 USE_TZ = False
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
@@ -189,6 +188,8 @@ CORS_ALLOW_HEADERS = (
     'csrf_token',
     'x-request-with',
     'responseType'
+    "Range",
+    'transfer-Encoding'
 )
 
 # 跨域请求时，是否运行携带cookie，默认为False

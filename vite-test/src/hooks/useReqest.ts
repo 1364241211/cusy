@@ -1,13 +1,14 @@
 import { ref } from "vue";
 import service from "../util/api";
 import { customer, ListMessage, METHOD, resMessage } from "../types";
-import { AxiosError, AxiosResponse } from "axios";
+import { AxiosError, AxiosRequestHeaders, AxiosResponse } from "axios";
 
 export async function useRequest(
   url: string,
   method: METHOD = METHOD.GET,
   data?: string,
-  BlobFile?: boolean
+  BlobFile?: boolean,
+  headers?: AxiosRequestHeaders
 ) {
   const res = ref<
     resMessage | ListMessage<customer> | Blob | undefined | null
@@ -17,7 +18,7 @@ export async function useRequest(
   switch (method) {
     case METHOD.GET:
       await service
-        .get(url, { responseType: resType })
+        .get(url, { responseType: resType, headers: headers })
         .then((resp: AxiosResponse) => {
           res.value = resp.data;
         })
@@ -27,7 +28,7 @@ export async function useRequest(
       break;
     case METHOD.POST:
       await service
-        .post(url, data, { responseType: resType })
+        .post(url, data, { responseType: resType, headers: headers })
         .then((resp: AxiosResponse) => {
           res.value = resp.data;
         })
@@ -37,7 +38,7 @@ export async function useRequest(
       break;
     case METHOD.DELETE:
       await service
-        .post(url, data, { responseType: resType })
+        .post(url, data, { responseType: resType, headers: headers })
         .then((resp: AxiosResponse) => {
           res.value = resp.data;
         })
@@ -47,7 +48,7 @@ export async function useRequest(
       break;
     case METHOD.UPDATE:
       await service
-        .post(url, data, { responseType: resType })
+        .post(url, data, { responseType: resType, headers: headers })
         .then((resp: AxiosResponse) => {
           res.value = resp.data;
         })

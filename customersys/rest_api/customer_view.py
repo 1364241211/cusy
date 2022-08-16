@@ -1,3 +1,4 @@
+import re
 import time
 
 from django.db.models import Q
@@ -10,11 +11,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .authentication import isLoginJWTAuthentication, customerTokenAuthentication
 from .base64Tobyte import base64ToImage
+from .customersOperation import customersOp
 from .message import message
 from .models import Customers, Class
 from .pagination import customersPagination
 from .resources import customersResources, customersMTResources
-from .serializer import (customerSerializer, customerTokenObtainSerializer, classSerializer, mdResSerializer)
+from .serializer import (customerSerializer, classSerializer, mdResSerializer, customerTokenObtainSerializer)
 
 
 class customerApiViewSet(ModelViewSet):
@@ -86,15 +88,15 @@ class customerApiViewSet(ModelViewSet):
             customer = self.get_queryset().get(pk=id)
         except Exception as e:
             return Response(message(status='failed', code=404, message=e.args[0]), status=200)
+        content = {"customer_id": customer.customer_id,
+                   "customer_name": customer.customer_name,
+                   "customer_photo": customer.customer_photo}
         try:
-            content = {"customer_id": customer.customer_id,
-                       "customer_name": customer.customer_name}
             customer.delete()
+            customersOp(content.get("customer_photo")).remove()
             return Response(
                 message(message="customer already delete", kwargs={"info": content}), status=200)
         except Exception as e:
-            content = {"customer_id": customer.customer_id,
-                       "customer_name": customer.customer_name}
             return Response(
                 message(status='failed', code=403, message=e.args[0], kwargs={"info": content}), status=200)
 
@@ -260,22 +262,40 @@ class saveMd(APIView):
     authentication_classes = [isLoginJWTAuthentication]
 
     def get(self, request):
-        info = base64ToImage("1", "1", "1").readMd()
-        return Response(message("success", 200, "请求成功", kwargs={"info": info}))
+        mdType = 1
+        if request.GET.__contains__("type"):
+            mdType = request.GET.get("type")
+        try:
+            info = base64ToImage("1", "1", "1").readMd(int(mdType))
+            return Response(message("success", 200, "请求成功", kwargs={"info": info}))
+        except ValueError as ve:
+            return Response(message("failed", 403, "参数不合法", kwargs={"info": ve.args[0]}))
 
     def post(self, request):
-        if "file" not in request.data:
-            return Response(message("failed", 400, "file 参数是必须的"))
-        file = request.data.get("file")
-        print(file.get("body"))
-        base64ToImage(file.get("body"), "ad", "md").saveMd()
-        return Response(message("success", 200, "文件保存成功!"))
+        if not request.data.__contains__("file") or not request.data.__contains__("type"):
+            return Response(message("failed", 400, "file 参数和type 参数是必须的"))
+        try:
+            file = request.data.get("file")
+            mdType = request.data.get("type")
+            if int(mdType) == 1:
+                base64ToImage(file.get("body"), "ad", "md").saveMd(mdType)
+            elif int(mdType) == 2:
+                base64ToImage(file.get("body"), "recharge", "md").saveMd(mdType)
+            return Response(message("success", 200, "文件保存成功!"))
+        except ValueError as ve:
+            return Response(message("failed", 403, "参数不合法", kwargs={"info": ve.args[0]}))
 
 
 class mdGeneralApi(APIView):
     def get(self, request):
-        info = base64ToImage("1", "1", "1").readMd()
-        return Response(message("success", 200, "请求成功", kwargs={"info": info}))
+        mdType = 1
+        if request.GET.__contains__("type"):
+            mdType = request.GET.get("type")
+        try:
+            info = base64ToImage("1", "1", "1").readMd(int(mdType))
+            return Response(message("success", 200, "请求成功", kwargs={"info": info}))
+        except ValueError as ve:
+            return Response(message("failed", 403, "参数不合法", kwargs={"info": ve.args[0]}))
 
 
 class exportResources(APIView):
@@ -334,6 +354,38 @@ class exportMTResources(APIView):
                                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         response["Content-Disposition"] = "attachment;filename=\"customers.xlsx\""
         return response
+
+
+bs = b''
+
+
+class exportAvatarRes(APIView):
+    authentication_classes = [isLoginJWTAuthentication]
+    customersList = Customers.objects.filter(is_valided=1)
+    tempPath, length = customersOp("").readAvatarZip([c.customer_photo for c in customersList])
+
+    def get(self, request):
+        with open(self.tempPath, 'rb') as f:
+            bs = f.read()
+        return Response(message("success", 200, "请求成功", kwargs={"info": self.length}))
+
+    def post(self, request):
+        if not request.headers.__contains__("range"):
+            return Response(400, message("failed", 400, "参数不合法", kwargs={"info": "range头缺失"}))
+        try:
+            rangeB = request.headers.get("range")
+            starts = re.findall(r"\d+", rangeB)
+            start, end = map(lambda x: int(x), starts)
+            if end > self.length:
+                raise ValueError("切片范围不合法")
+            resp = HttpResponse(bs[start:end + 1])
+            resp['content-type'] = 'application/octet-stream'
+            resp['Content-Range'] = "bytes {0}-{1}/*".format(start, end)
+            return resp
+        except ValueError as ve:
+            return Response(416, message("failed", 416, "参数不合法", kwargs={"info": ve.args[0]}))
+        except Exception as e:
+            return Response(400, message("failed", 400, "参数不合法", kwargs={"info": e.args[0]}))
 
 
 class customerTokenObtainView(TokenObtainPairView):

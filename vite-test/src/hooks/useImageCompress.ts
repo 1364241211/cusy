@@ -10,7 +10,7 @@ export async function useImageCompress(data: Blob) {
   const isImage = /image/.test(data.type);
   if (isImage && data.size > 1024 * 1024 * 2) {
     try {
-      compressValue = await compressAccurately(data, 1024);
+      compressValue = await compressAccurately(data, 512);
     } catch (err) {
       error.value = err;
     }

@@ -38,8 +38,8 @@
 <script lang="ts" setup>
 import jwtDecode, { JwtPayload } from "jwt-decode";
 import { onUnmounted, onMounted, inject, ref, provide, nextTick } from "vue";
-// import { User, VideoPlay } from "@element-plus/icons"
 import cookies from "../cookies/index";
+
 interface MenuItem {
   routeIndex: string;
   itemName: string;
@@ -49,6 +49,7 @@ const asideMenuList = ref<Array<MenuItem>>([
   { routeIndex: "customers", itemName: "用户管理", iconName: "User" },
   { routeIndex: "moderateUsers", itemName: "用户审核", iconName: "UserFilled" },
   { routeIndex: "adDesign", itemName: "通知定制", iconName: "VideoPlay" },
+  { routeIndex: "rechargeNotice", itemName: "充值通知", iconName: "Present" },
   { routeIndex: "classesControl", itemName: "班级管理", iconName: "School" },
 ]);
 
@@ -59,7 +60,6 @@ interface jwtAdmin extends JwtPayload {
   admin_name?: string;
 }
 const { admin_account, admin_id, admin_name } = jwtData as jwtAdmin;
-const asideTab = ref<Array<string>>([]);
 onMounted(() => {
   const updateShow = inject("updateFaShow", Function, true);
   updateShow();
@@ -93,9 +93,9 @@ provide("reload", reload);
       @media screen and (max-width: 1024px) {
         min-width: calc(130px + 1%);
       }
-	  @media screen and(min-width:1024px){
-		max-width: calc(200px - 1%)
-	  }
+      @media screen and(min-width:1024px) {
+        max-width: calc(200px - 1%);
+      }
     }
     .main-content {
       height: 100%;

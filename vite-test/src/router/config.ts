@@ -55,6 +55,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import("../components/AdDesign.vue"),
       },
       {
+        path: "/admin/controlPanel/rechargeNotice",
+        name: "rechargeNotice",
+        component: () => import("../components/ReChargeMd.vue"),
+      },
+      {
         path: "/admin/controlPanel/moderateUsers",
         name: "moderateUsers",
         component: () => import("../components/ValidateCustomers.vue"),

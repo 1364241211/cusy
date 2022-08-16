@@ -1,8 +1,10 @@
 ## ignore this files ##
-/customersys/*.ini
-/customersys/*.log
-/customersys/*.pid
-/vite-test/node_modules/
+customersys/*.ini
+customersys/*.log
+customersys/*.pid
+customersys/statics/
+vite-test/node_modules/
 .vim
 .idea
-/vite-test/dist/
+vite-test/dist/
+.DS_Store

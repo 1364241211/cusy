@@ -7,10 +7,11 @@ import MdEditor from "md-editor-v3";
 import { resMessage } from "../types";
 
 const text = ref<string>();
+const props = defineProps<{ type: number; edId: string }>();
 
 // 组件挂载时渲染md文档
 onMounted(async () => {
-  const { res, error } = await useRequest("/mdGeneralApi");
+  const { res, error } = await useRequest(`/mdGeneralApi?type=${props.type}`);
   if (res.value) {
     text.value = ((res.value as resMessage).info as string)
       ? ((res.value as resMessage).info as string)
@@ -23,7 +24,11 @@ onMounted(async () => {
 
 <template>
   <div class="md-preview-div">
-    <md-editor v-model="text" :preview-only="true"></md-editor>
+    <md-editor
+      v-model="text"
+      :preview-only="true"
+      :editor-id="edId"
+    ></md-editor>
   </div>
 </template>
 

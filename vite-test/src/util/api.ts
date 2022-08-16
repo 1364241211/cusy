@@ -25,6 +25,7 @@ service.interceptors.request.use(
     } else {
       // router.push("/admin/login")
     }
+    const test = "hhh";
     return config;
   },
   (error) => {

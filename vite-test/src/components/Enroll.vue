@@ -176,7 +176,7 @@
       style="text-align: center; padding: 1vh 1vw"
     >
       <h2 style="padding: 0; margin: 0.5vh 0vw; color: #2c3e50">通知!</h2>
-      <component :is="PreviewMdVue"></component>
+      <component :is="PreviewMdVue" :edId="'adDesign'" :type="1"></component>
     </van-popup>
   </div>
 </template>

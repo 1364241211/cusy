@@ -31,16 +31,24 @@ class base64ToImage:
         mdVideoPath = "/md/video/{}.{}".format(self.avatarName, self.fileType)
         return mdVideoPath
 
-    def saveMd(self):
+    def saveMd(self, mdType):
         # byteContent = bytes(self.base64str[0], encoding="ascii")
         # content = byteContent.decode('unicode-escape')
         content = self.base64str[0]
-        with open(os.path.join(settings.STATICFILES_DIRS[0], "md/{}.{}".format(self.avatarName, self.fileType)),
-                  "w") as f:
-            f.write(str(content))
+        if mdType == 1:
+            with open(os.path.join(settings.STATICFILES_DIRS[0], "md/{}.{}".format(self.avatarName, self.fileType)),
+                      "w") as f:
+                f.write(str(content))
+        elif mdType == 2:
+            with open(os.path.join(settings.STATICFILES_DIRS[0], "md/{}.{}".format(self.avatarName, self.fileType)),
+                      "w") as f:
+                f.write(str(content))
 
-    def readMd(self):
-        content = str()
-        with open(os.path.join(settings.STATICFILES_DIRS[0], "md/ad.md"), "r") as f:
-            content = f.read()
+    def readMd(self, mdType: int = 1):
+        if mdType == 1:
+            with open(os.path.join(settings.STATICFILES_DIRS[0], "md/ad.md"), "r") as f:
+                content = f.read()
+        elif mdType == 2:
+            with open(os.path.join(settings.STATICFILES_DIRS[0], "md/recharge.md"), "r") as f:
+                content = f.read()
         return content

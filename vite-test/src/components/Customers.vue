@@ -60,6 +60,18 @@
               >全部导出(人脸识别模版)
             </el-button></el-tooltip
           >
+          <el-tooltip
+            content="点击后导出所有图片<strong style='color:red'><i>文件内容过大，请耐心等待，请勿刷新页面!<i></strong>的数据"
+            raw-content
+          >
+            <el-button
+              type="danger"
+              :icon="Picture"
+              @click="exportAvatar"
+              :loading="exportAvatarLoding"
+              >导出所有图片
+            </el-button></el-tooltip
+          >
         </el-button-group>
         <el-input
           v-model="search"
@@ -212,6 +224,7 @@ import {
   CircleClose,
   Files,
   Document,
+  Picture,
 } from "@element-plus/icons";
 
 import {
@@ -225,6 +238,7 @@ import {
 import service from "../util/api";
 import { useRequest } from "../hooks/useReqest";
 
+const exportAvatarLoding = ref(false);
 const locale = zhCn;
 const buttonEnable = ref(true);
 const selectionRows = ref(0);
@@ -542,6 +556,59 @@ const exportMTAll = async () => {
     ElMessage.error("导出失败");
   }
 };
+
+// 分片下载用户头像
+const exportAvatar = async () => {
+  exportAvatarLoding.value = true;
+  const { res: f1, error: f2 } = await useRequest("/exportAvatar", METHOD.GET);
+  let fileDataList: Array<Blob> = [];
+  let fileLength: number = 0;
+  if (f1.value) {
+    fileLength = (f1.value as resMessage).info as number;
+  } else if (f2.value) {
+    ElMessage.error(f2.value);
+    return;
+  }
+  console.log(f2);
+  let taskQueen = [];
+  const Q: number = Math.floor(fileLength / 10);
+  for (let i = 0; i < 10; i++) {
+    if (i == 9) taskQueen.push(serq("/exportAvatar", i * Q, fileLength));
+    else taskQueen.push(serq("/exportAvatar", i * Q, (i + 1) * Q - 1));
+  }
+  await Promise.all(taskQueen)
+    .then((results) => {
+      results.forEach((res) => {
+        console.log(res.data);
+        fileDataList.push(res.data);
+      });
+    })
+    .catch((err) => {
+      ElMessage.error(err);
+      exportAvatarLoding.value = false;
+    });
+  const file = new Blob(fileDataList);
+  const a = document.createElement("a");
+  a.href = window.URL.createObjectURL(file);
+  a.download = "avatar.zip";
+  a.click();
+  window.URL.revokeObjectURL(a.href);
+  exportAvatarLoding.value = false;
+};
+
+const serq = (url: string, start: number, end: number) => {
+  const headers = {
+    "transfer-encoding": "chunked",
+    Range: `bytes=${start}-${end}`,
+  };
+  console.log(headers);
+  const s = service.post(url, undefined, {
+    responseType: "blob",
+    headers: headers,
+  });
+  return s;
+};
+
 // 刷新页面时请求一次数据
 onMounted(async () => {
   const { res, error } = await useRequest("/customers");
