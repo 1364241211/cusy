@@ -39,7 +39,6 @@ declare module '@vue/runtime-core' {
     Enroll: typeof import('./src/components/Enroll.vue')['default']
     EnrollSearch: typeof import('./src/components/EnrollSearch.vue')['default']
     MarkdownComp: typeof import('./src/components/MarkdownComp.vue')['default']
-    MdComponent: typeof import('./src/components/mdComponent.vue')['default']
     PreviewMd: typeof import('./src/components/PreviewMd.vue')['default']
     ReChargeMd: typeof import('./src/components/ReChargeMd.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

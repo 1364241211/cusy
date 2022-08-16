@@ -291,8 +291,8 @@ const changeInitIndex = (iniInex: number) => {
   pre_init_index.value = iniInex;
 };
 
-const pageSize = ref<number>(100);
-const pageSizeList = ref<Array<number>>([100, 200, 300]);
+const pageSize = ref<number>(30);
+const pageSizeList = ref<Array<number>>([30, 100, 200]);
 const currentPage = ref<number>();
 
 // 监听当前页面页码，发生改变时滚动到表格最上方
