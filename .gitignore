@@ -2,10 +2,10 @@
 customersys/*.ini
 customersys/*.log
 customersys/*.pid
-customersys/statics/
+customersys/statics/*
 !customersys/statics/captchaImage
 customersys/.idea
-vite-test/node_modules/
+vite-test/node_modules/*
 .vim
-vite-test/dist/
+vite-test/dist/*
 .DS_Store
