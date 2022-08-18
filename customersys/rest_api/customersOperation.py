@@ -13,18 +13,25 @@ class customersOp():
         os.remove(self.resPath)
 
     def readAvatarZip(self, filters=None):
-        tempPath = os.path.join(self.staticPath, "avatar.zip")
+        tempZipPath = os.path.join(self.staticPath, "avatar1.zip")
         # avatarImages = os.listdir(self.staticPath)
-        if os.path.exists(tempPath):
-            os.remove(tempPath)
-        if filters:
-            with zipfile.ZipFile(tempPath, "a", zipfile.ZIP_DEFLATED) as zipFile:
-                print(tempPath)
-                for avatar in filters:
-                    temp = str(os.path.join(self.staticPath, avatar))
-                    try:
-                        zipFile.write(temp, arcname="avatar")
-                    except FileNotFoundError:
-                        continue
-        fileSize = os.path.getsize(tempPath)
-        return tempPath, fileSize
+        if os.path.exists(tempZipPath):
+            os.remove(tempZipPath)
+        # if filters:
+        #     with zipfile.ZipFile(tempZipPath, "w", zipfile.ZIP_DEFLATED) as zipFile:
+        #         for avatar in filters:
+        #             temp = str(os.path.join(self.staticPath, avatar))
+        #             try:
+        #                 zipFile.write(temp, arcname=avatar)
+        #             except FileNotFoundError:
+        #                 continue
+        with zipfile.ZipFile(tempZipPath, "w", zipfile.ZIP_DEFLATED) as zipFile:
+            temp = os.listdir(self.staticPath)
+            for te in temp:
+                try:
+                    p = os.path.join(self.staticPath, te)
+                    zipFile.write(p, arcname=te)
+                except FileNotFoundError:
+                    continue
+        fileSize = os.path.getsize(tempZipPath)
+        return tempZipPath, fileSize

@@ -571,22 +571,23 @@ const exportAvatar = async () => {
   }
   console.log(f2);
   let taskQueen = [];
-  const Q: number = Math.floor(fileLength / 10);
-  for (let i = 0; i < 10; i++) {
-    if (i == 9) taskQueen.push(serq("/exportAvatar", i * Q, fileLength));
+  const SLICE_COUNT = 10;
+  const Q: number = Math.floor(fileLength / SLICE_COUNT);
+  for (let i = 0; i < SLICE_COUNT; i++) {
+    if (i == SLICE_COUNT - 1)
+      taskQueen.push(serq("/exportAvatar", i * Q, fileLength));
     else taskQueen.push(serq("/exportAvatar", i * Q, (i + 1) * Q - 1));
   }
-  await Promise.all(taskQueen)
-    .then((results) => {
-      results.forEach((res) => {
-        console.log(res.data);
-        fileDataList.push(res.data);
-      });
-    })
-    .catch((err) => {
-      ElMessage.error(err);
-      exportAvatarLoding.value = false;
+  console.log(fileDataList);
+
+  try {
+    const values = await Promise.all(taskQueen);
+    values.forEach((value) => {
+      fileDataList.push(value.data);
     });
+  } catch (errors) {
+    console.log(errors);
+  }
   const file = new Blob(fileDataList);
   const a = document.createElement("a");
   a.href = window.URL.createObjectURL(file);

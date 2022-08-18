@@ -1,6 +1,8 @@
+import os.path
 import re
 import time
 
+from django.conf import settings
 from django.db.models import Q
 from django.http.response import HttpResponse
 from django.middleware.csrf import get_token
@@ -356,18 +358,13 @@ class exportMTResources(APIView):
         return response
 
 
-bs = b''
-
-
 class exportAvatarRes(APIView):
     authentication_classes = [isLoginJWTAuthentication]
     customersList = Customers.objects.filter(is_valided=1)
-    tempPath, length = customersOp("").readAvatarZip([c.customer_photo for c in customersList])
 
     def get(self, request):
-        with open(self.tempPath, 'rb') as f:
-            bs = f.read()
-        return Response(message("success", 200, "请求成功", kwargs={"info": self.length}))
+        tempPath, length = customersOp("").readAvatarZip([c.customer_photo for c in self.customersList])
+        return Response(message("success", 200, "请求成功", kwargs={"info": length}))
 
     def post(self, request):
         if not request.headers.__contains__("range"):
@@ -376,11 +373,15 @@ class exportAvatarRes(APIView):
             rangeB = request.headers.get("range")
             starts = re.findall(r"\d+", rangeB)
             start, end = map(lambda x: int(x), starts)
-            if end > self.length:
-                raise ValueError("切片范围不合法")
-            resp = HttpResponse(bs[start:end + 1])
+            # if end > self.length:
+            #    raise ValueError("切片范围不合法")
+            with open(os.path.join(settings.STATICFILES_DIRS[0], "avatar/avatar.zip"), "rb") as f:
+                f.seek(start)
+                sliceF = f.read(end - start + 1)
+            resp = HttpResponse(sliceF)
             resp['content-type'] = 'application/octet-stream'
             resp['Content-Range'] = "bytes {0}-{1}/*".format(start, end)
+            resp['accept-Ranges'] = "bytes"
             return resp
         except ValueError as ve:
             return Response(416, message("failed", 416, "参数不合法", kwargs={"info": ve.args[0]}))
