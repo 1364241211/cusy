@@ -37,7 +37,8 @@ class customersOp():
             if newZipInfo.download == 0:
                 tempFuture: futureInfo = settings.GLOBAL_THREAD_POOL.future_dict.get(
                     os.path.splitext(newZipInfo.zip_name)[0])
-                tempFuture.single = singleEnum.SHUTDOWN
+                if tempFuture:
+                    tempFuture.single = singleEnum.SHUTDOWN
             with self.sync_lock:
                 tempRemoveFilePath = os.path.join(self.zipFilePath, newZipInfo.zip_name)
                 if os.path.exists(tempRemoveFilePath):

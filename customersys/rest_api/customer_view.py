@@ -410,7 +410,8 @@ class exportAvatarRes(APIView):
             start, end = map(lambda x: int(x), starts)
             # if end > self.length:
             #    raise ValueError("切片范围不合法")
-            with open(os.path.join(settings.STATICFILES_DIRS[0], "zipFile/{}.zip".format(uuid)), "rb") as f:
+            zipFileName = os.path.join(settings.STATICFILES_DIRS[0], "zipFile/{}.zip".format(uuid))
+            with open(zipFileName, "rb") as f:
                 f.seek(start)
                 sliceF = f.read(end - start + 1)
             resp = HttpResponse(sliceF)
@@ -420,6 +421,8 @@ class exportAvatarRes(APIView):
             return resp
         except ValueError as ve:
             return Response(416, message("failed", 416, "参数不合法", kwargs={"info": ve.args[0]}))
+        except FileNotFoundError:
+            return Response(status=404, data=message("failed", 404, "参数不合法", kwargs={"info": "文件不存在，请重新添加任务"}))
         except Exception as e:
             return Response(400, message("failed", 400, "参数不合法", kwargs={"info": e.args[0]}))
 

@@ -13,6 +13,7 @@ import service from "../util/api";
 const locale = ref(zhCn);
 
 const downloadLoadingList = ref([false, false, false]);
+const exportButtonLoading = ref(false);
 const avatarFileInfo = ref<Array<zipFileInfo>>([]);
 
 // 分片下载图片压缩包
@@ -33,27 +34,27 @@ const downloadZipFile = async (index: number) => {
         serq(`/exportAvatar?uuid=${uuid}`, i * Q, (i + 1) * Q - 1)
       );
   }
-  console.log(fileDataList);
 
   try {
     const values = await Promise.all(taskQueen);
     values.forEach((value) => {
       fileDataList.push(value.data);
     });
-  } catch (errors) {
-    console.log(errors);
+    const file = new Blob(fileDataList);
+    const a = document.createElement("a");
+    a.href = window.URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(a.href);
+  } catch (errors: any) {
+    ElMessage.error(errors.message);
   }
   downloadLoadingList.value[index] = false;
-  const file = new Blob(fileDataList);
-  const a = document.createElement("a");
-  a.href = window.URL.createObjectURL(file);
-  a.download = fileName;
-  a.click();
-  window.URL.revokeObjectURL(a.href);
 };
 
 // 发送导出图片请求
 const exportAvatar = async () => {
+  exportButtonLoading.value = true;
   const { res: f1, error: f2 } = await useRequest(
     "/exportAvatar",
     METHOD.PATCH
@@ -64,6 +65,9 @@ const exportAvatar = async () => {
     return;
   }
   await refreshPage();
+  setTimeout(() => {
+    exportButtonLoading.value = false;
+  }, 3000);
 };
 
 const serq = (url: string, start: number, end: number) => {
@@ -71,7 +75,6 @@ const serq = (url: string, start: number, end: number) => {
     "transfer-encoding": "chunked",
     Range: `bytes=${start}-${end}`,
   };
-  console.log(headers);
   const s = service.post(url, undefined, {
     responseType: "blob",
     headers: headers,
@@ -119,7 +122,11 @@ onUnmounted(() => {
             content="点击后生成一个任务用于后台压缩图片，压缩成功后即可下载<br/><strong style='color:red'><i>文件内容过大，请耐心等待!<i></strong>"
             raw-content
           >
-            <el-button type="primary" :icon="Download" @click="exportAvatar"
+            <el-button
+              type="primary"
+              :icon="Download"
+              @click="exportAvatar"
+              :loading="exportButtonLoading"
               >导出所有图片
             </el-button></el-tooltip
           >
