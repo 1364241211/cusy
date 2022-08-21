@@ -2,8 +2,9 @@
 customersys/*.ini
 customersys/*.log
 customersys/*.pid
-customersys/statics/*
-!customersys/statics/captchaImage
+customersys/statics/avatar/*
+customersys/statics/md/*
+customersys/statics/zipFile/*
 customersys/.idea
 vite-test/node_modules/*
 .vim
