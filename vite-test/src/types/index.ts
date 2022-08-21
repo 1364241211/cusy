@@ -38,6 +38,7 @@ export enum METHOD {
   POST = "POST",
   UPDATE = "UPDATE",
   DELETE = "DELETE",
+  PATCH = "PATCH",
 }
 // 网络响应信息
 interface messageInfo {
@@ -55,4 +56,10 @@ export interface ListMessage<T> {
   next?: string;
   previous?: string;
   results?: Array<T>;
+}
+export interface zipFileInfo {
+  zip_name?: string;
+  zip_size?: number;
+  last_modified_time?: string;
+  download?: number;
 }

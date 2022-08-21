@@ -56,6 +56,16 @@ export async function useRequest(
           error.value = err.message;
         });
       break;
+    case METHOD.PATCH:
+      await service
+        .patch(url, data, { responseType: resType, headers: headers })
+        .then((resp: AxiosResponse) => {
+          res.value = resp.data;
+        })
+        .catch((err: AxiosError) => {
+          error.value = err.message;
+        });
+      break;
   }
   return { res, error };
 }

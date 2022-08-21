@@ -14,6 +14,8 @@ import datetime
 import os.path
 from pathlib import Path
 
+from rest_api.thread import threadPool
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -209,3 +211,6 @@ CORS_ORIGIN_WHITELIST = (
     # 'taoduoduo-test.oss-cn-shenzhen.aliyuncs.com:80',  # 线上
     # '10.0.2.187:8080'  # 本地
 )
+
+# create global thread pool
+GLOBAL_THREAD_POOL = threadPool()

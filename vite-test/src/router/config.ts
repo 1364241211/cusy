@@ -69,6 +69,11 @@ const routes: RouteRecordRaw[] = [
         name: "classesControl",
         component: () => import("../components/ClassesControl.vue"),
       },
+      {
+        path: "/admin/controlPanel/exportAvatar",
+        name: "exportAvatar",
+        component: () => import("../components/ExportAvatar.vue"),
+      },
     ],
     meta: {
       requireAuth: true,

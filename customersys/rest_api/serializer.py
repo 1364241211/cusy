@@ -4,7 +4,7 @@ from hashlib import md5
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Admin, Customers, Class, Resources
+from .models import Admin, Customers, Class, Resources, ZipfilesInfo
 
 
 # admin用户序列化器
@@ -91,6 +91,12 @@ class mdResSerializer(serializers.ModelSerializer):
         model = Resources
         fields = '__all__'
         read_only_field = ('id',)
+
+
+class zipFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ZipfilesInfo
+        fields = '__all__'
 
 
 # admin用户token序列化器

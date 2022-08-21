@@ -60,18 +60,6 @@
               >全部导出(人脸识别模版)
             </el-button></el-tooltip
           >
-          <el-tooltip
-            content="点击后导出所有图片<strong style='color:red'><i>文件内容过大，请耐心等待，请勿刷新页面!<i></strong>的数据"
-            raw-content
-          >
-            <el-button
-              type="danger"
-              :icon="Picture"
-              @click="exportAvatar"
-              :loading="exportAvatarLoding"
-              >导出所有图片
-            </el-button></el-tooltip
-          >
         </el-button-group>
         <el-input
           v-model="search"

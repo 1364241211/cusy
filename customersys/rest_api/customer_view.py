@@ -1,6 +1,7 @@
 import os.path
 import re
 import time
+from uuid import uuid1
 
 from django.conf import settings
 from django.db.models import Q
@@ -15,10 +16,12 @@ from .authentication import isLoginJWTAuthentication, customerTokenAuthenticatio
 from .base64Tobyte import base64ToImage
 from .customersOperation import customersOp
 from .message import message
-from .models import Customers, Class
+from .models import Customers, Class, ZipfilesInfo
 from .pagination import customersPagination
 from .resources import customersResources, customersMTResources
-from .serializer import (customerSerializer, classSerializer, mdResSerializer, customerTokenObtainSerializer)
+from .serializer import (customerSerializer, classSerializer, mdResSerializer, customerTokenObtainSerializer,
+                         zipFileSerializer)
+from .thread import threadPool, futureInfo, singleEnum
 
 
 class customerApiViewSet(ModelViewSet):
@@ -359,23 +362,55 @@ class exportMTResources(APIView):
 
 
 class exportAvatarRes(APIView):
-    authentication_classes = [isLoginJWTAuthentication]
+    # authentication_classes = [isLoginJWTAuthentication]
     customersList = Customers.objects.filter(is_valided=1)
 
     def get(self, request):
-        tempPath, length = customersOp("").readAvatarZip([c.customer_photo for c in self.customersList])
-        return Response(message("success", 200, "请求成功", kwargs={"info": length}))
+        thread: threadPool = settings.GLOBAL_THREAD_POOL
+        uuid = request.GET.get("uuid")
+
+        # 如果uuid在url请求链接中，执行查询
+        if uuid or len(str(uuid).strip()) == 0:
+            is_running, future = thread.is_running(uuid)
+            if is_running:
+                return Response(message("success", 200, "请求成功",
+                                        kwargs={
+                                            "info": {"uuid": str(uuid), "running": is_running}}))
+            else:
+                return Response(message("failed", 401, "请求失败",
+                                        kwargs={
+                                            "info": {"uuid": str(uuid), "running": is_running}}))
+        else:
+            zipFileInfoList = ZipfilesInfo.objects.all()
+            zipSerializer = zipFileSerializer(zipFileInfoList, many=True)
+            return Response(message("success", 200, "请求成功",
+                                    kwargs={
+                                        "info": zipSerializer.data}))
+
+    def patch(self, request):
+        thread: threadPool = settings.GLOBAL_THREAD_POOL
+        future_uuid = str(uuid1().int)
+        future = thread.pool.submit(customersOp("").readAvatarZip, future_uuid,
+                                    [c.customer_photo for c in self.customersList])
+
+        thread.future_dict.update({future_uuid: futureInfo(future, singleEnum.RUNNING)})
+        return Response(message("success", 200, "请求成功",
+                                kwargs={
+                                    "info": {"uuid": future_uuid, "zipName": "{}.zip".format(future_uuid)}}))
 
     def post(self, request):
         if not request.headers.__contains__("range"):
             return Response(400, message("failed", 400, "参数不合法", kwargs={"info": "range头缺失"}))
+        if not request.GET.__contains__("uuid"):
+            return Response(400, message("failed", 400, "参数不合法", kwargs={"info": "uuid缺失"}))
         try:
+            uuid = request.GET.get("uuid")
             rangeB = request.headers.get("range")
             starts = re.findall(r"\d+", rangeB)
             start, end = map(lambda x: int(x), starts)
             # if end > self.length:
             #    raise ValueError("切片范围不合法")
-            with open(os.path.join(settings.STATICFILES_DIRS[0], "avatar/avatar.zip"), "rb") as f:
+            with open(os.path.join(settings.STATICFILES_DIRS[0], "zipFile/{}.zip".format(uuid)), "rb") as f:
                 f.seek(start)
                 sliceF = f.read(end - start + 1)
             resp = HttpResponse(sliceF)
@@ -387,6 +422,19 @@ class exportAvatarRes(APIView):
             return Response(416, message("failed", 416, "参数不合法", kwargs={"info": ve.args[0]}))
         except Exception as e:
             return Response(400, message("failed", 400, "参数不合法", kwargs={"info": e.args[0]}))
+
+    def delete(self, request):
+        thread: threadPool = settings.GLOBAL_THREAD_POOL
+        uuid = request.GET.get("uuid")
+        if uuid:
+            thread.destroy_task(uuid)
+            is_running, future = thread.is_running(uuid)
+            if not future:
+                return Response(
+                    message("success", 200, "请求成功", kwargs={"info": {"uuid": str(uuid), "closed": not is_running}}))
+            else:
+                return Response(
+                    message("failed", 500, "请求失败", kwargs={"info": {"uuid": str(uuid), "closed": is_running}}))
 
 
 class customerTokenObtainView(TokenObtainPairView):

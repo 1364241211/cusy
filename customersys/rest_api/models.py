@@ -86,6 +86,17 @@ class Resources(models.Model):
         db_table = 'Resources'
 
 
+class ZipfilesInfo(models.Model):
+    zip_name = models.CharField(max_length=255, blank=True, null=True)
+    zip_size = models.PositiveIntegerField(blank=True, null=True)
+    last_modified_time = models.DateTimeField(blank=True, null=True)
+    download = models.PositiveIntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'ZipFiles_info'
+
+
 class AuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=150)
 

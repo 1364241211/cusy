@@ -53,6 +53,7 @@ urlpatterns = [
     path('exportAll', exportResources.as_view()),
     path('exportMTAll', exportMTResources.as_view()),
     path('exportAvatar', exportAvatarRes.as_view()),
+    path('exportAvatar/uuid:str', exportAvatarRes.as_view()),
     path('validateCustomers', validate_Customer),
     path('customer/<str:param>', customer_detail, name='customer-detail'),
     path('customers', customers, name='customers'),
