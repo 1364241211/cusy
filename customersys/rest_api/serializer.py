@@ -1,8 +1,10 @@
 import time
 from hashlib import md5
 
+from django.conf import settings
+from jwt import decode
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenVerifySerializer
 
 from .models import Admin, Customers, Class, Resources, ZipfilesInfo
 
@@ -21,17 +23,17 @@ class adminSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.admin_account = validated_data.get(instance, 'admin_account')
-        instance.admin_password = validated_data.get(
-            instance, 'admin_password')
+        instance.admin_password = validated_data.get(instance, 'admin_password')
         instance.admin_name = validated_data.get(instance, 'admin_name')
         instance.save()
         return instance
 
-    class Meta:
-        model = Admin
-        fields = '__all__'
-        read_only_fields = ('admin_id', 'admin_account',
-                            'admin_name', 'admin_logtime')
+
+class Meta:
+    model = Admin
+    fields = '__all__'
+    read_only_fields = ('admin_id', 'admin_account',
+                        'admin_name', 'admin_logtime')
 
 
 # customer用户序列化器
@@ -119,3 +121,18 @@ class customerTokenObtainSerializer(TokenObtainPairSerializer):
         token['customer_id'] = int(time.time())
         token['is_customer'] = True
         return token
+
+
+class adminClearAllDataSerializer(TokenVerifySerializer):
+    """
+    获取token信息,用于验证
+    """
+
+    def validate(self, attrs):
+        """
+        attr['token']: 请求token
+        settings.SECRET_KEY: settings.py 中的加密字符
+        algorithms: 加密算法
+        """
+        decode_data = decode(attrs['token'], settings.SECRET_KEY, algorithms=['HS256'])
+        return decode_data

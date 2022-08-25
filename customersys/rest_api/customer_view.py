@@ -4,22 +4,25 @@ import time
 from uuid import uuid1
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http.response import HttpResponse
 from django.middleware.csrf import get_token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenViewBase
 
 from .authentication import isLoginJWTAuthentication, customerTokenAuthentication
 from .base64Tobyte import base64ToImage
 from .customersOperation import customersOp
 from .message import message
-from .models import Customers, Class, ZipfilesInfo
+from .models import Customers, Class, ZipfilesInfo, Admin
 from .pagination import customersPagination
 from .resources import customersResources, customersMTResources
 from .serializer import (customerSerializer, classSerializer, mdResSerializer, customerTokenObtainSerializer,
+                         adminClearAllDataSerializer,
                          zipFileSerializer)
 from .thread import threadPool, futureInfo, singleEnum
 
@@ -408,8 +411,6 @@ class exportAvatarRes(APIView):
             rangeB = request.headers.get("range")
             starts = re.findall(r"\d+", rangeB)
             start, end = map(lambda x: int(x), starts)
-            # if end > self.length:
-            #    raise ValueError("切片范围不合法")
             zipFileName = os.path.join(settings.STATICFILES_DIRS[0], "zipFile/{}.zip".format(uuid))
             with open(zipFileName, "rb") as f:
                 f.seek(start)
@@ -438,6 +439,38 @@ class exportAvatarRes(APIView):
             else:
                 return Response(
                     message("failed", 500, "请求失败", kwargs={"info": {"uuid": str(uuid), "closed": is_running}}))
+
+
+class clearAllData(TokenViewBase):
+    authentication_classes = [isLoginJWTAuthentication]
+    serializer_class = adminClearAllDataSerializer
+
+    def post(self, request, *args, **kwargs):
+        thread: threadPool = settings.GLOBAL_THREAD_POOL
+        token = request.headers.get("Authorization").split(" ")
+        if not request.data.__contains__('password'):
+            return Response(message("failed", "405", "password参数是必须的"))
+        password = request.data.get("password")
+        serializer = self.get_serializer(data={f"token": f"{token[1]}"})
+        try:
+            serializer.is_valid(raise_exception=False)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+        serializer_data = serializer.validated_data
+        try:
+            admin = Admin.objects.get(admin_account=serializer_data.get("admin_account"))
+            if admin.check_password(password):
+                Customers.objects.all().delete()
+                Class.objects.all().delete()
+                ZipfilesInfo.objects.all().delete()
+                thread.pool.submit(customersOp("").removeAll)
+                return Response(message("success", 200, "成功", kwargs={"info": "数据清除成功"}))
+            else:
+                return Response(message("failed", 401, "失败", kwargs={"info": "密码错误"}), )
+        except ObjectDoesNotExist:
+            return Response(message("failed", 404, "失败", kwargs={"info": "查无此人"}), )
+        except Exception as e:
+            return Response(message("failed", 400, "失败", kwargs={"info": e.args[0]}), )
 
 
 class customerTokenObtainView(TokenObtainPairView):

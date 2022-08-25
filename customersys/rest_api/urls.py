@@ -16,6 +16,7 @@ from .customer_view import (customerGeneralApi,
                             exportResources,
                             exportMTResources,
                             exportAvatarRes,
+                            clearAllData,
                             classGeneralApi,
                             classViewSet)
 
@@ -54,6 +55,7 @@ urlpatterns = [
     path('exportMTAll', exportMTResources.as_view()),
     path('exportAvatar', exportAvatarRes.as_view()),
     path('exportAvatar/uuid:str', exportAvatarRes.as_view()),
+    path('clearAll', clearAllData.as_view()),
     path('validateCustomers', validate_Customer),
     path('customer/<str:param>', customer_detail, name='customer-detail'),
     path('customers', customers, name='customers'),

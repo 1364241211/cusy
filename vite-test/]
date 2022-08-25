@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, Ref } from "vue";
 import { Download, Refresh } from "@element-plus/icons";
 import zhCn from "element-plus/lib/locale/lang/zh-cn";
 import { ElMessage } from "element-plus";
@@ -16,34 +16,36 @@ const locale = ref(zhCn);
 const downloadLoadingList = ref([false, false, false]);
 const exportButtonLoading = ref(false);
 const avatarFileInfo = ref<Array<zipFileInfo>>([]);
-const totalProgressLsit = ref<Array<Array<number>>>([]);
+const progressList = ref<Array<Ref<number | undefined>>>(new Array(12).fill(0));
 
 // 分片下载图片压缩包
 const downloadZipFile = async (index: number) => {
+  progressList.value.splice(0, progressList.value.length - 1);
   downloadLoadingList.value[index] = true;
   let fileDataList: Array<Blob> = [];
   let taskQueen = [];
   const fileLength: number = avatarFileInfo.value.at(index)?.zip_size!;
   const fileName: string = avatarFileInfo.value.at(index)?.zip_name!;
   const uuid = fileName.split(".")[0];
-  const SLICE_COUNT = 10;
+  const SLICE_COUNT = 12;
   const Q: number = Math.floor(fileLength / SLICE_COUNT);
+  const progress = ref<number | undefined>();
   for (let i = 0; i < SLICE_COUNT; i++) {
-    /* const progress = ref<number | undefined>(); */
     if (i == SLICE_COUNT - 1)
       taskQueen.push(
-        serq(`/exportAvatar?uuid=${uuid}`, i * Q, fileLength, index, i)
+        serq(`/exportAvatar?uuid=${uuid}`, i * Q, fileLength, progress)
       );
     else
       taskQueen.push(
-        serq(`/exportAvatar?uuid=${uuid}`, i * Q, (i + 1) * Q - 1, index, i)
+        serq(`/exportAvatar?uuid=${uuid}`, i * Q, (i + 1) * Q - 1, progress)
       );
-    /* totalProgressLsit.value.at(index).value[i] = progress; */
+    progressList.value?.push(progress);
+    console.log(progressList.value);
   }
 
   try {
-    for (let i = 0; i < 2; i++) {
-      const values = await Promise.all(taskQueen.slice(i * 5, (i + 1) * 5));
+    for (let i = 0; i < 4; i++) {
+      const values = await Promise.all(taskQueen.slice(i * 6, (i + 1) * 6));
       values.forEach((value) => {
         fileDataList.push(value.data);
       });
@@ -82,8 +84,7 @@ const serq = (
   url: string,
   start: number,
   end: number,
-  index: number,
-  currIndex: number
+  progress: Ref<number | undefined>
 ) => {
   const headers = {
     /* "transfer-encoding": "chunked", */
@@ -94,9 +95,10 @@ const serq = (
     headers: headers,
     timeout: 300000,
     onDownloadProgress(progressEvent) {
-      totalProgressLsit.value[index][currIndex] = Math.round(
+      progress.value = Math.round(
         (progressEvent.loaded / progressEvent.total) * 100
       );
+      console.log(progress.value);
     },
   });
   return s;
@@ -118,23 +120,14 @@ const convToMb = (row: any, column: any, cellValue: any, index: any) => {
   cellValue = (cellValue / 1024 / 1024).toFixed(2);
   return cellValue;
 };
-
 const timeId = ref();
-
 onMounted(async () => {
-  const progress1 = new Array(10).fill(0);
-  const progress2 = new Array(10).fill(0);
-  const progress3 = new Array(10).fill(0);
-  totalProgressLsit.value?.push(progress1);
-  totalProgressLsit.value?.push(progress2);
-  totalProgressLsit.value?.push(progress3);
   await refreshPage();
   // 每隔两秒刷新页面
   timeId.value = setInterval(async () => {
     await refreshPage();
   }, 2000);
 });
-
 onUnmounted(() => {
   clearInterval(timeId.value);
 });
@@ -207,17 +200,24 @@ onUnmounted(() => {
           <template #default="scoped">
             <div class="progress-group">
               <component
-                v-for="cur in totalProgressLsit?.at(scoped.$index)"
+                v-if="progressList?.length! > 0"
+                v-for="cur in progressList"
                 :is="DownloadProgress"
-                :currentProgress="`${cur ? cur : 0}`"
-              >
-              </component>
+                :currentProgress="`${cur}%`"
+              ></component>
+              <component
+                v-else
+                :is="DownloadProgress"
+                :currentProgress="`0%`"
+              ></component>
             </div>
           </template>
         </el-table-column>
         <el-table-column align="center" label="操作">
           <template #default="tail">
             <el-button-group>
+              <!----<div class="button-groups">--->
+
               <el-button
                 v-if="avatarFileInfo[tail.$index].download! == 1"
                 type="success"

@@ -52,6 +52,11 @@ const asideMenuList = ref<Array<MenuItem>>([
   { routeIndex: "rechargeNotice", itemName: "充值通知", iconName: "Present" },
   { routeIndex: "classesControl", itemName: "班级管理", iconName: "School" },
   { routeIndex: "exportAvatar", itemName: "用户头像导出", iconName: "Money" },
+  {
+    routeIndex: "importOperations",
+    itemName: "重要操作",
+    iconName: "WarningFilled",
+  },
 ]);
 
 const jwtData = jwtDecode(cookies.cookies.get("token"));

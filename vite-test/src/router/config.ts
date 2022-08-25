@@ -6,9 +6,7 @@ const routes: RouteRecordRaw[] = [
     redirect: "/index",
   },
   {
-    path: "/index",
-    name: "index",
-    // components: { indexVue: () => import("../views/Index.vue") }
+    path: "/index", name: "index", // components: { indexVue: () => import("../views/Index.vue") }
     component: () => import("../views/Index.vue"),
     meta: {
       requireAuth: false,
@@ -73,6 +71,11 @@ const routes: RouteRecordRaw[] = [
         path: "/admin/controlPanel/exportAvatar",
         name: "exportAvatar",
         component: () => import("../components/ExportAvatar.vue"),
+      },
+      {
+        path: "/admin/controlPanel/importOperations",
+        name: "importOperations",
+        component: () => import("../components/ImportOperations.vue"),
       },
     ],
     meta: {

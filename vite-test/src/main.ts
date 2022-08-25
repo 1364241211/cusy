@@ -3,6 +3,7 @@ import App from "./App.vue";
 import "element-plus/theme-chalk/src/message.scss";
 import "element-plus/theme-chalk/src/table.scss";
 import "element-plus/theme-chalk/src/message-box.scss";
+import "element-plus/theme-chalk/src/Notification.scss";
 import "element-plus/theme-chalk/src/popover.scss";
 import "element-plus/theme-chalk/src/popconfirm.scss";
 import "element-plus/theme-chalk/src/popper.scss";
