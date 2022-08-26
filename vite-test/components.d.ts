@@ -42,7 +42,6 @@ declare module '@vue/runtime-core' {
     EnrollSearch: typeof import('./src/components/EnrollSearch.vue')['default']
     ExportAvatar: typeof import('./src/components/ExportAvatar.vue')['default']
     ImportOperations: typeof import('./src/components/ImportOperations.vue')['default']
-    ImportOpreations: typeof import('./src/components/ImportOpreations.vue')['default']
     MarkdownComp: typeof import('./src/components/MarkdownComp.vue')['default']
     PreviewMd: typeof import('./src/components/PreviewMd.vue')['default']
     ReChargeMd: typeof import('./src/components/ReChargeMd.vue')['default']
