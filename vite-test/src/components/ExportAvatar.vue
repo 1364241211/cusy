@@ -130,9 +130,9 @@ onMounted(async () => {
   totalProgressLsit.value?.push(progress3);
   await refreshPage();
   // 每隔两秒刷新页面
-  /* timeId.value = setInterval(async () => { */
-  /*   await refreshPage(); */
-  /* }, 2000); */
+  timeId.value = setInterval(async () => {
+    await refreshPage();
+  }, 3000);
 });
 
 onUnmounted(() => {

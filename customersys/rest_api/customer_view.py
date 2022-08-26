@@ -14,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenViewBase
 
+from .aliMessage import aliMessage
 from .authentication import isLoginJWTAuthentication, customerTokenAuthentication
 from .base64Tobyte import base64ToImage
 from .customersOperation import customersOp
@@ -120,13 +121,17 @@ class customerApiViewSet(ModelViewSet):
                     customer = Customers.objects.get(pk=data)
                     customer.is_valided = status
                     customer.save()
+                    # 获取对应id的电话号码
+                    customer_phone = customer.parent_phone
+                    # 发送短信
+                    aliMessage.main([customer_phone], ["四川信管"])
                     newMessage = message(
                         status="success", code=200, message="OK")
                     messageList.append(newMessage)
             return Response(message(status="success", code=200, message="Ok", kwargs={"results": messageList}),
                             status=200)
         except Exception as e:
-            return Response(message(status="failed", code=400, message=e.args[0], kwargs={"info": messageList}),
+            return Response(message(status="failed", code=400, message="短信发送失败", kwargs={"info": e.args[0]}),
                             status=200)
 
 

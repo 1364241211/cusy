@@ -239,8 +239,17 @@ const moderateUsers = async (status: number) => {
     })
   );
   if (res.value) {
-    ElMessage.success({ message: (res.value as resMessage).message });
-    reload();
+    switch ((res.value as resMessage).code) {
+      case 200:
+        {
+          ElMessage.success({ message: (res.value as resMessage).message });
+          reload();
+        }
+        break;
+      default:
+        ElMessage.error((res.value as resMessage).message);
+        break;
+    }
     changeLoading();
   } else if (error.value) {
     changeLoading();
