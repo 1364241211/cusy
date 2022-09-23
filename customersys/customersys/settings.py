@@ -112,11 +112,11 @@ WSGI_APPLICATION = 'customersys.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'CustomerSys',
-        'USER': 'customerSysAdmin',
-        'PASSWORD': 'clh1364241211',
-        'HOST': '101.37.145.137',
-        'PORT': '3306',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
     }
 }
 
